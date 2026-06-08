@@ -1,0 +1,76 @@
+cart schema:- 
+⏳ Stock validation
+⏳ Product status validation
+⏳ Variant stock validation
+⏳ Populate product details in cart
+⏳ Coupon support
+⏳ Tax calculation
+
+
+order sechma ":-
+trackingNumber
+paymentId
+estimatedDeliveryDate
+cancelReason
+merchantIds
+discountAmount
+                                                  Wishlist → Move To Cart
+
+
+                           do it right leater :-
+
+
+  Development Testing ke liye
+
+Agar frontend abhi nahi bana hai to temporarily:
+
+const isValid = true;
+
+kar sakte ho verifyPayment me.
+
+Ya:
+
+if (process.env.NODE_ENV === 'development') {
+  isValid = true;
+}
+Test Request
+POST /payments/verify
+
+Body:
+
+{
+  "orderId": "6a23c8eb8d7bf1bc7aa2e02f",
+  "razorpayOrderId": "order_SyGNcdjQumpno0",
+  "razorpayPaymentId": "pay_test123",
+  "razorpaySignature": "anything"
+}
+
+Expected:
+
+{
+  "success": true,
+  "message": "Payment verified successfully"
+}
+Verify Order
+GET /orders/6a23c8eb8d7bf1bc7aa2e02f
+
+Expected:
+
+{
+  "paymentMethod": "razorpay",
+  "paymentStatus": "paid",
+  "paymentId": "pay_test123",
+  "paidAt": "2026-06-06T..."
+}
+Ek Important Improvement
+
+Abhi verify hone ke baad ye bhi karna chahiye:
+
+order.paymentStatus = PaymentStatus.PAID;
+order.paymentId = dto.razorpayPaymentId;
+order.paidAt = new Date();
+
+// optional
+order.orderStatus = OrderStatus.CONFIRMED;
+
+Kyunki payment successful hone ke baad order automatically confirmed state me chala jana chahiye.

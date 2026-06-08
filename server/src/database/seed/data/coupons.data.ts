@@ -1,0 +1,30 @@
+export const SEED_COUPONS = [
+  {
+    code: 'WELCOME10',
+    name: 'Welcome 10% Off',
+    description: '10% off on your first order',
+    discountType: 'percentage' as const,
+    discountValue: 10,
+    minimumOrderAmount: 499,
+    maximumDiscountAmount: 500,
+    usageLimit: 1000,
+  },
+  {
+    code: 'FLAT100',
+    name: 'Flat ₹100 Off',
+    description: 'Flat discount on orders above ₹999',
+    discountType: 'fixed' as const,
+    discountValue: 100,
+    minimumOrderAmount: 999,
+    usageLimit: 500,
+  },
+  {
+    code: 'TECH500',
+    name: 'Tech Zone Special',
+    description: '₹500 off on electronics orders above ₹5000',
+    discountType: 'fixed' as const,
+    discountValue: 500,
+    minimumOrderAmount: 5000,
+    usageLimit: 200,
+  },
+];
