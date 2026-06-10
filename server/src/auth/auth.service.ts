@@ -30,6 +30,7 @@ export class AuthService {
 
   async login(loginDto: LoginDto, res: Response) {
     const user = await this.usersService.findByEmail(loginDto.email);
+    console.log('user with email ~~', user);
 
     if (!user) {
       throw new UnauthorizedException('Invalid email or password');
@@ -59,10 +60,14 @@ export class AuthService {
     googleUser: GoogleProfilePayload,
     res: Response,
   ): Promise<void> {
-    const clientUrl = this.configService.get<string>(
-      'CLIENT_URL',
-      'http://localhost:5173',
-    );
+    // const clientUrl = this.configService.get<string>(
+    //   'CLIENT_URL',
+    //   'http://localhost:5173',
+    // );
+    const clientUrl = process.env.CORS_ORIGIN;
+    if (!clientUrl) {
+      throw new Error('CLIENT_URL is not set');
+    }
 
     try {
       const user = await this.usersService.findOrCreateGoogleUser(googleUser);

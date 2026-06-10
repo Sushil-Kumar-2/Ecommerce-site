@@ -100,6 +100,8 @@ export class UsersService {
     return this.userModel.find({ role, status: 'active' });
   }
   async findByEmail(email: string) {
+    const all_users = await this.userModel.find();
+    console.log('users ~~', all_users);
     return this.userModel.findOne({ email });
   }
 
