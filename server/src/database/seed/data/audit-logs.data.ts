@@ -1,4 +1,7 @@
-import { AuditAction, AuditResource } from '../../../audit-logs/audit-log.enums';
+import {
+  AuditAction,
+  AuditResource,
+} from '../../../audit-logs/audit-log.enums';
 import type { DemoUserKey } from './users.data';
 
 export const SEED_AUDIT_LOGS: Array<{

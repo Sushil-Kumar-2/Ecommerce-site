@@ -3,7 +3,10 @@ import { IsEnum, IsMongoId, IsOptional, IsString } from 'class-validator';
 import { AuditAction } from '../audit-log.enums';
 
 export class AuditLogFilterDto {
-  @ApiPropertyOptional({ enum: AuditAction, example: AuditAction.PRODUCT_CREATED })
+  @ApiPropertyOptional({
+    enum: AuditAction,
+    example: AuditAction.PRODUCT_CREATED,
+  })
   @IsOptional()
   @IsEnum(AuditAction)
   action?: AuditAction;

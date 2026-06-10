@@ -26,7 +26,8 @@ export class AddToCartDto {
   quantity: number;
 
   @ApiPropertyOptional({
-    description: 'Variant attribute name when adding a specific product variant',
+    description:
+      'Variant attribute name when adding a specific product variant',
     example: 'Color',
   })
   @IsOptional()

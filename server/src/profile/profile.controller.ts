@@ -38,10 +38,7 @@ export class ProfileController {
   @ApiResponse({ status: 200, description: 'Updated profile' })
   @ApiResponse(ApiBadRequestResponse)
   @ApiResponse(ApiUnauthorizedResponse)
-  updateProfile(
-    @CurrentUser() user: JwtUser,
-    @Body() dto: UpdateProfileDto,
-  ) {
+  updateProfile(@CurrentUser() user: JwtUser, @Body() dto: UpdateProfileDto) {
     return this.profileService.updateProfile(user.userId, dto);
   }
 
@@ -50,10 +47,7 @@ export class ProfileController {
   @ApiResponse({ status: 200, description: 'Updated profile with new avatar' })
   @ApiResponse(ApiBadRequestResponse)
   @ApiResponse(ApiUnauthorizedResponse)
-  updateAvatar(
-    @CurrentUser() user: JwtUser,
-    @Body() dto: UpdateAvatarDto,
-  ) {
+  updateAvatar(@CurrentUser() user: JwtUser, @Body() dto: UpdateAvatarDto) {
     return this.profileService.updateAvatar(user.userId, dto);
   }
 
@@ -62,10 +56,7 @@ export class ProfileController {
   @ApiResponse({ status: 200, description: 'Password changed successfully' })
   @ApiResponse(ApiBadRequestResponse)
   @ApiResponse(ApiUnauthorizedResponse)
-  changePassword(
-    @CurrentUser() user: JwtUser,
-    @Body() dto: ChangePasswordDto,
-  ) {
+  changePassword(@CurrentUser() user: JwtUser, @Body() dto: ChangePasswordDto) {
     return this.profileService.changePassword(user.userId, dto);
   }
 }

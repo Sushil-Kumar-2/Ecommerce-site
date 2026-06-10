@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
+  RejectMerchantDialog,
   useActivateMerchant,
   useAdminMerchantDetail,
   useAdminMerchantProducts,
@@ -35,6 +36,7 @@ export function AdminMerchantDetailPage() {
   const [activateMerchant, { isLoading: isActivating }] = useActivateMerchant()
   const [blockMerchant, { isLoading: isBlocking }] = useBlockMerchant()
   const [showBlockConfirm, setShowBlockConfirm] = useState(false)
+  const [showRejectDialog, setShowRejectDialog] = useState(false)
 
   if (error || (!isLoading && !merchant)) {
     return (
@@ -115,7 +117,24 @@ export function AdminMerchantDetailPage() {
         </Card>
 
         <aside className="space-y-3">
-          {merchant.status !== 'active' ? (
+          {merchant.status === 'pending' ? (
+            <>
+              <Button
+                className="w-full"
+                disabled={isActivating}
+                onClick={() => id && void activateMerchant(id)}
+              >
+                Activate merchant
+              </Button>
+              <Button
+                variant="destructive"
+                className="w-full"
+                onClick={() => setShowRejectDialog(true)}
+              >
+                Reject application
+              </Button>
+            </>
+          ) : merchant.status !== 'active' ? (
             <Button
               className="w-full"
               disabled={isActivating}
@@ -183,6 +202,13 @@ export function AdminMerchantDetailPage() {
           await blockMerchant(id)
           setShowBlockConfirm(false)
         }}
+      />
+
+      <RejectMerchantDialog
+        open={showRejectDialog}
+        onClose={() => setShowRejectDialog(false)}
+        merchantId={id ?? ''}
+        merchantName={merchant.shopName || merchant.name}
       />
     </PageContainer>
   )

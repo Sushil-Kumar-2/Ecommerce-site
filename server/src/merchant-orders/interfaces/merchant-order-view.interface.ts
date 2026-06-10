@@ -3,7 +3,11 @@ import {
   OrderItem,
   ShippingAddress,
 } from '../../orders/schemas/order.schema';
-import { OrderStatus, PaymentMethod, PaymentStatus } from '../../orders/order.enums';
+import {
+  OrderStatus,
+  PaymentMethod,
+  PaymentStatus,
+} from '../../orders/order.enums';
 
 export interface MerchantOrderView {
   orderId: string;

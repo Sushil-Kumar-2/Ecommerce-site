@@ -1,14 +1,16 @@
 export {
   profileApi,
-  useGetProfileQuery,
+  useGetAccountProfileQuery,
   useUpdateProfileMutation,
   useUpdateAvatarMutation,
   useChangePasswordMutation,
 } from './profileApi'
 export {
+  uploadAvatarImage,
   useProfile,
   useUpdateProfile,
   useUpdateAvatar,
+  useUploadAvatar,
   useChangePassword,
 } from './hooks'
 export { updateProfileSchema, changePasswordSchema } from './schemas'

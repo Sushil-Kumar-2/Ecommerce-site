@@ -4,6 +4,8 @@ export interface AdminCategory {
   slug: string
   description?: string
   image?: string
+  parentCategory?: string
+  status?: 'active' | 'inactive'
   isActive: boolean
   createdAt?: string
   updatedAt?: string
@@ -14,6 +16,8 @@ export interface CreateCategoryRequest {
   slug: string
   description?: string
   image?: string
+  parentCategory?: string
+  status?: 'active' | 'inactive'
   isActive?: boolean
 }
 

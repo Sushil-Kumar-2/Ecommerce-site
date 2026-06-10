@@ -10,7 +10,8 @@ export class CloudinaryService {
   private readonly baseFolder: string;
 
   constructor(private readonly configService: ConfigService) {
-    this.cloudName = this.configService.get<string>('CLOUDINARY_CLOUD_NAME') ?? '';
+    this.cloudName =
+      this.configService.get<string>('CLOUDINARY_CLOUD_NAME') ?? '';
     this.apiKey = this.configService.get<string>('CLOUDINARY_API_KEY') ?? '';
     this.apiSecret =
       this.configService.get<string>('CLOUDINARY_API_SECRET') ?? '';

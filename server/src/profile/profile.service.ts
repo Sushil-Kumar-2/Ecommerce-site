@@ -109,6 +109,12 @@ export class ProfileService {
       throw new NotFoundException('User not found');
     }
 
+    if (!user.password) {
+      throw new BadRequestException(
+        'Password change is not available for Google sign-in accounts.',
+      );
+    }
+
     const isCurrentValid = await bcrypt.compare(
       dto.currentPassword,
       user.password,

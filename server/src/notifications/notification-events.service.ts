@@ -248,7 +248,7 @@ export class NotificationEventsService {
   ): Promise<void> {
     await this.notificationsService.createNotification({
       userId,
-      type: NotificationType.RETURN_APPROVED as NotificationType,
+      type: NotificationType.RETURN_APPROVED,
       title: 'Return Approved',
       message: `Your return request for "${productTitle}" on order ${orderNumber} has been approved.`,
       referenceId: returnId,

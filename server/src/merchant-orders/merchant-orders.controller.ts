@@ -41,7 +41,10 @@ export class MerchantOrdersController {
 
   @Get('summary')
   @ApiOperation({ summary: 'Get merchant order fulfillment summary' })
-  @ApiResponse({ status: 200, description: 'Order counts by fulfillment status' })
+  @ApiResponse({
+    status: 200,
+    description: 'Order counts by fulfillment status',
+  })
   @ApiResponse(ApiUnauthorizedResponse)
   @ApiResponse(ApiForbiddenResponse)
   getSummary(@CurrentUser() user: JwtUser) {
@@ -63,7 +66,10 @@ export class MerchantOrdersController {
   @Get(':id')
   @ApiOperation({ summary: 'Get merchant order details by order ID' })
   @ApiParam({ name: 'id', description: 'Order MongoDB ObjectId' })
-  @ApiResponse({ status: 200, description: 'Order with merchant fulfillment slice' })
+  @ApiResponse({
+    status: 200,
+    description: 'Order with merchant fulfillment slice',
+  })
   @ApiResponse(ApiNotFoundResponse)
   @ApiResponse(ApiUnauthorizedResponse)
   @ApiResponse(ApiForbiddenResponse)

@@ -16,9 +16,11 @@ export { ReturnRequestDialog } from './components/ReturnRequestDialog'
 export {
   canCancelOrder,
   canRequestReturn,
+  canRetryPayment,
   formatOrderDate,
   formatStatusLabel,
   getOrderStatusSteps,
+  getRetryPaymentLabel,
 } from './utils'
 export {
   OrderStatus,

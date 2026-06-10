@@ -80,5 +80,7 @@ export interface Category {
   slug: string
   description?: string
   image?: string
+  parentCategory?: string
+  status?: 'active' | 'inactive'
   isActive: boolean
 }

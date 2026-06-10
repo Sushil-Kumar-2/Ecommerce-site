@@ -38,7 +38,9 @@ export class ReturnsController {
   @Post()
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth(SWAGGER_BEARER_AUTH)
-  @ApiOperation({ summary: 'Create a return request for a delivered order item' })
+  @ApiOperation({
+    summary: 'Create a return request for a delivered order item',
+  })
   @ApiResponse({ status: 201, description: 'Return request created' })
   @ApiResponse(ApiUnauthorizedResponse)
   @ApiResponse(ApiBadRequestResponse)

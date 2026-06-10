@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { NotificationDocument } from '../notifications/schemas/notification.schema';
 import { NotificationType } from '../notifications/enums/notification-type.enum';
 import { EmailTemplate } from './enums/email-template.enum';
-import { ResendService } from './resend.service';
+import { NodemailerService } from './nodemailer.service';
 import { TemplateService } from './template.service';
 
 const EMAIL_ENABLED_TYPES = new Set<NotificationType>([
@@ -22,7 +22,8 @@ const TYPE_TO_TEMPLATE: Partial<Record<NotificationType, EmailTemplate>> = {
   [NotificationType.ORDER_DELIVERED]: EmailTemplate.ORDER_DELIVERED,
   [NotificationType.RETURN_APPROVED]: EmailTemplate.RETURN_APPROVED,
   [NotificationType.REFUND_COMPLETED]: EmailTemplate.REFUND_COMPLETED,
-  [NotificationType.NEW_MERCHANT_REGISTERED]: EmailTemplate.MERCHANT_REGISTRATION,
+  [NotificationType.NEW_MERCHANT_REGISTERED]:
+    EmailTemplate.MERCHANT_REGISTRATION,
 };
 
 @Injectable()
@@ -30,7 +31,7 @@ export class EmailService {
   private readonly logger = new Logger(EmailService.name);
 
   constructor(
-    private readonly resendService: ResendService,
+    private readonly mailerService: NodemailerService,
     private readonly templateService: TemplateService,
   ) {}
 
@@ -56,15 +57,13 @@ export class EmailService {
       ...notification.metadata,
     };
 
-    await this.resendService.send({
+    await this.mailerService.send({
       to: recipientEmail,
       subject: notification.title,
       html: this.templateService.render(template, context),
     });
 
-    this.logger.log(
-      `Email sent (${notification.type}) to ${recipientEmail}`,
-    );
+    this.logger.log(`Email sent (${notification.type}) to ${recipientEmail}`);
   }
 
   async sendPasswordChanged(
@@ -78,10 +77,13 @@ export class EmailService {
       year: new Date().getFullYear(),
     };
 
-    await this.resendService.send({
+    await this.mailerService.send({
       to: recipientEmail,
       subject: 'Password Changed',
-      html: this.templateService.render(EmailTemplate.PASSWORD_CHANGED, context),
+      html: this.templateService.render(
+        EmailTemplate.PASSWORD_CHANGED,
+        context,
+      ),
     });
 
     this.logger.log(`Password changed email sent to ${recipientEmail}`);

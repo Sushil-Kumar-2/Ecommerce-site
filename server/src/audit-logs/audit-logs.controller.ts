@@ -28,7 +28,9 @@ export class AuditLogsController {
   constructor(private readonly auditLogsService: AuditLogsService) {}
 
   @Get()
-  @ApiOperation({ summary: 'List audit logs with filters and pagination (admin only)' })
+  @ApiOperation({
+    summary: 'List audit logs with filters and pagination (admin only)',
+  })
   @ApiResponse({ status: 200, description: 'Paginated audit logs' })
   @ApiResponse(ApiUnauthorizedResponse)
   @ApiResponse(ApiForbiddenResponse)

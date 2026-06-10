@@ -10,13 +10,20 @@ import { cn } from '@/lib/utils'
 interface ProductRowProps {
   title: string
   products: Product[]
+  categoryMap?: Record<string, string>
   viewAllHref?: string
   className?: string
 }
 
 const CARD_SCROLL_COUNT = 4
 
-export function ProductRow({ title, products, viewAllHref, className }: ProductRowProps) {
+export function ProductRow({
+  title,
+  products,
+  categoryMap = {},
+  viewAllHref,
+  className,
+}: ProductRowProps) {
   const viewportRef = useRef<HTMLDivElement>(null)
   const [canScrollLeft, setCanScrollLeft] = useState(false)
   const [canScrollRight, setCanScrollRight] = useState(false)
@@ -111,9 +118,14 @@ export function ProductRow({ title, products, viewAllHref, className }: ProductR
             <div
               key={product._id}
               data-product-card
-              className="w-[168px] shrink-0 sm:w-[200px]"
+              className="w-[200px] shrink-0 sm:w-[220px] md:w-[240px]"
             >
-              <ProductCard product={product} className="h-full" />
+              <ProductCard
+                product={product}
+                categoryName={categoryMap[product.categoryId]}
+                density="compact"
+                className="h-full"
+              />
             </div>
           ))}
         </div>

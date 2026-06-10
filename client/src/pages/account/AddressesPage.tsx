@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import { EmptyState } from '@/components/common/EmptyState'
 import { ErrorState } from '@/components/common/ErrorState'
 import { PageContainer } from '@/components/common/PageContainer'
+import { ConfirmAction } from '@/components/design-system'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -115,14 +116,19 @@ export function AddressesPage() {
                   <Button variant="outline" size="sm" asChild>
                     <Link to={ROUTES.addressEdit(address._id)}>Edit</Link>
                   </Button>
-                  <Button
+                  <ConfirmAction
+                    title="Delete address?"
+                    description="This address will be permanently removed."
+                    confirmLabel="Delete"
                     variant="destructive"
-                    size="sm"
-                    disabled={isDeleting}
-                    onClick={() => void deleteAddress(address._id)}
-                  >
-                    Delete
-                  </Button>
+                    isLoading={isDeleting}
+                    onConfirm={() => deleteAddress(address._id)}
+                    trigger={
+                      <Button variant="destructive" size="sm" disabled={isDeleting}>
+                        Delete
+                      </Button>
+                    }
+                  />
                 </div>
               </div>
             </article>

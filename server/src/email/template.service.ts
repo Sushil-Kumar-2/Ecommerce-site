@@ -6,16 +6,17 @@ import { EmailTemplate } from './enums/email-template.enum';
 
 @Injectable()
 export class TemplateService {
-  private readonly compiled = new Map<EmailTemplate, Handlebars.TemplateDelegate>();
+  private readonly compiled = new Map<
+    EmailTemplate,
+    Handlebars.TemplateDelegate
+  >();
 
   render(template: EmailTemplate, context: Record<string, unknown>): string {
     const compiled = this.getCompiled(template);
     return compiled(context);
   }
 
-  private getCompiled(
-    template: EmailTemplate,
-  ): Handlebars.TemplateDelegate {
+  private getCompiled(template: EmailTemplate): Handlebars.TemplateDelegate {
     const cached = this.compiled.get(template);
     if (cached) {
       return cached;

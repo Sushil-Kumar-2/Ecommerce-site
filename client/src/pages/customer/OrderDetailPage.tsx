@@ -1,11 +1,20 @@
 import { ArrowLeft, Loader2 } from 'lucide-react'
 import { useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 
 import { ErrorState } from '@/components/common/ErrorState'
 import { PageContainer } from '@/components/common/PageContainer'
-import { Badge } from '@/components/ui/badge'
+import { StatusBadge } from '@/components/design-system'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import {
   Card,
   CardContent,
@@ -21,12 +30,16 @@ import {
   ReturnRequestDialog,
   canCancelOrder,
   canRequestReturn,
+  canRetryPayment,
   formatOrderDate,
   formatStatusLabel,
   getOrderStatusSteps,
+  getRetryPaymentLabel,
   useCancelOrder,
   useOrderDetail,
 } from '@/features/orders'
+import { useAuth } from '@/features/auth'
+import { useRazorpayPayment } from '@/features/payments'
 import { formatPrice } from '@/features/products/utils'
 import { getApiErrorMessage } from '@/utils/api-error'
 import { ROUTES } from '@/utils/routes'
@@ -43,11 +56,25 @@ function OrderDetailSkeleton() {
 
 export function OrderDetailPage() {
   const { id } = useParams<{ id: string }>()
+  const navigate = useNavigate()
+  const { user } = useAuth()
   const { data: order, error, isLoading, refetch } = useOrderDetail(id)
   const [cancelOrder, { isLoading: isCancelling }] = useCancelOrder()
+  const { pay: payWithRazorpay, isLoading: isPaying } = useRazorpayPayment()
   const [showCancelDialog, setShowCancelDialog] = useState(false)
   const [showReturnDialog, setShowReturnDialog] = useState(false)
   const [cancelReason, setCancelReason] = useState('')
+
+  const handleRetryPayment = async () => {
+    if (!order) return
+
+    try {
+      await payWithRazorpay(order._id, user?.email)
+      navigate(`${ROUTES.paymentSuccess}?orderId=${order._id}`, { replace: true })
+    } catch {
+      await refetch()
+    }
+  }
 
   const handleCancel = async () => {
     if (!id || cancelReason.trim().length < 3) return
@@ -86,6 +113,7 @@ export function OrderDetailPage() {
   }
 
   const steps = getOrderStatusSteps(order)
+  const showRetryPayment = canRetryPayment(order)
 
   return (
     <PageContainer>
@@ -96,6 +124,17 @@ export function OrderDetailPage() {
         </Link>
       </Button>
 
+      {order.paymentStatus === 'failed' ? (
+        <Alert variant="destructive" className="mb-6">
+          <AlertTitle>Payment failed</AlertTitle>
+          <AlertDescription>
+            {order.paymentFailureReason
+              ? `${order.paymentFailureReason}. You can retry payment below.`
+              : 'Your payment could not be completed. You can retry payment below.'}
+          </AlertDescription>
+        </Alert>
+      ) : null}
+
       <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="font-heading text-2xl font-semibold">{order.orderNumber}</h1>
@@ -104,8 +143,14 @@ export function OrderDetailPage() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Badge variant="outline">{formatStatusLabel(order.orderStatus)}</Badge>
-          <Badge>{formatStatusLabel(order.paymentStatus)}</Badge>
+          <StatusBadge
+            status={order.orderStatus}
+            label={formatStatusLabel(order.orderStatus)}
+          />
+          <StatusBadge
+            status={order.paymentStatus}
+            label={formatStatusLabel(order.paymentStatus)}
+          />
         </div>
       </div>
 
@@ -195,6 +240,20 @@ export function OrderDetailPage() {
             </CardContent>
           </Card>
 
+          {showRetryPayment ? (
+            <Button
+              className="w-full"
+              disabled={isPaying}
+              onClick={() => void handleRetryPayment()}
+            >
+              {isPaying ? (
+                <Loader2 className="animate-spin" />
+              ) : (
+                getRetryPaymentLabel(order)
+              )}
+            </Button>
+          ) : null}
+
           {canCancelOrder(order) ? (
             <Button
               variant="destructive"
@@ -217,40 +276,41 @@ export function OrderDetailPage() {
         </aside>
       </div>
 
-      {showCancelDialog ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-xl border bg-background p-6 shadow-lg">
-            <h2 className="mb-4 text-lg font-semibold">Cancel order</h2>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="cancelReason">Reason for cancellation</Label>
-                <Input
-                  id="cancelReason"
-                  value={cancelReason}
-                  onChange={(event) => setCancelReason(event.target.value)}
-                  placeholder="At least 3 characters..."
-                />
-              </div>
-              <div className="flex justify-end gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => setShowCancelDialog(false)}
-                  disabled={isCancelling}
-                >
-                  Keep order
-                </Button>
-                <Button
-                  variant="destructive"
-                  disabled={isCancelling || cancelReason.trim().length < 3}
-                  onClick={() => void handleCancel()}
-                >
-                  {isCancelling ? <Loader2 className="animate-spin" /> : 'Cancel order'}
-                </Button>
-              </div>
-            </div>
+      <Dialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Cancel order</DialogTitle>
+            <DialogDescription>
+              Please provide a reason for cancelling this order.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="cancelReason">Reason for cancellation</Label>
+            <Input
+              id="cancelReason"
+              value={cancelReason}
+              onChange={(event) => setCancelReason(event.target.value)}
+              placeholder="At least 3 characters..."
+            />
           </div>
-        </div>
-      ) : null}
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowCancelDialog(false)}
+              disabled={isCancelling}
+            >
+              Keep order
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={isCancelling || cancelReason.trim().length < 3}
+              onClick={() => void handleCancel()}
+            >
+              {isCancelling ? <Loader2 className="animate-spin" /> : 'Cancel order'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <ReturnRequestDialog
         open={showReturnDialog}

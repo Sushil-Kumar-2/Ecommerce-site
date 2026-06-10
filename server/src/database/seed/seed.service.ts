@@ -3,17 +3,29 @@ import { InjectModel } from '@nestjs/mongoose';
 import * as bcrypt from 'bcrypt';
 import { Model, Types } from 'mongoose';
 
-import { Address, AddressDocument } from '../../addresses/schemas/address.schema';
-import { AuditLog, AuditLogDocument } from '../../audit-logs/schemas/audit-log.schema';
+import {
+  Address,
+  AddressDocument,
+} from '../../addresses/schemas/address.schema';
+import {
+  AuditLog,
+  AuditLogDocument,
+} from '../../audit-logs/schemas/audit-log.schema';
 import { Cart, CartDocument } from '../../cart/schemas/cart.schema';
-import { Category, CategoryDocument } from '../../categories/schemas/category.schema';
+import {
+  Category,
+  CategoryDocument,
+} from '../../categories/schemas/category.schema';
 import { Coupon, CouponDocument } from '../../coupons/schemas/coupon.schema';
 import {
   InventoryTransaction,
   InventoryTransactionDocument,
 } from '../../inventory/schemas/inventory-transaction.schema';
 import { InventoryTransactionType } from '../../inventory/inventory.enums';
-import { Notification, NotificationDocument } from '../../notifications/schemas/notification.schema';
+import {
+  Notification,
+  NotificationDocument,
+} from '../../notifications/schemas/notification.schema';
 import {
   ProductReport,
   ProductReportDocument,
@@ -25,15 +37,24 @@ import {
   PaymentMethod,
   PaymentStatus,
 } from '../../orders/order.enums';
-import { Product, ProductDocument } from '../../products/schemas/product.schema';
+import {
+  Product,
+  ProductDocument,
+} from '../../products/schemas/product.schema';
 import {
   RecentlyViewed,
   RecentlyViewedDocument,
 } from '../../recently-viewed/schemas/recently-viewed.schema';
-import { ReturnRequest, ReturnRequestDocument } from '../../returns/schemas/return-request.schema';
+import {
+  ReturnRequest,
+  ReturnRequestDocument,
+} from '../../returns/schemas/return-request.schema';
 import { Review, ReviewDocument } from '../../reviews/schemas/review.schema';
 import { User, UserDocument } from '../../users/schemas/user.schema';
-import { Wishlist, WishlistDocument } from '../../wishlists/schemas/wishlist.schema';
+import {
+  Wishlist,
+  WishlistDocument,
+} from '../../wishlists/schemas/wishlist.schema';
 
 import { SEED_ADDRESSES } from './data/addresses.data';
 import { SEED_AUDIT_LOGS } from './data/audit-logs.data';
@@ -71,21 +92,28 @@ export class SeedService {
 
   constructor(
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
-    @InjectModel(Category.name) private readonly categoryModel: Model<CategoryDocument>,
-    @InjectModel(Product.name) private readonly productModel: Model<ProductDocument>,
-    @InjectModel(Coupon.name) private readonly couponModel: Model<CouponDocument>,
-    @InjectModel(Address.name) private readonly addressModel: Model<AddressDocument>,
-    @InjectModel(Wishlist.name) private readonly wishlistModel: Model<WishlistDocument>,
+    @InjectModel(Category.name)
+    private readonly categoryModel: Model<CategoryDocument>,
+    @InjectModel(Product.name)
+    private readonly productModel: Model<ProductDocument>,
+    @InjectModel(Coupon.name)
+    private readonly couponModel: Model<CouponDocument>,
+    @InjectModel(Address.name)
+    private readonly addressModel: Model<AddressDocument>,
+    @InjectModel(Wishlist.name)
+    private readonly wishlistModel: Model<WishlistDocument>,
     @InjectModel(Cart.name) private readonly cartModel: Model<CartDocument>,
     @InjectModel(RecentlyViewed.name)
     private readonly recentlyViewedModel: Model<RecentlyViewedDocument>,
     @InjectModel(Order.name) private readonly orderModel: Model<OrderDocument>,
-    @InjectModel(Review.name) private readonly reviewModel: Model<ReviewDocument>,
+    @InjectModel(Review.name)
+    private readonly reviewModel: Model<ReviewDocument>,
     @InjectModel(InventoryTransaction.name)
     private readonly inventoryModel: Model<InventoryTransactionDocument>,
     @InjectModel(ProductReport.name)
     private readonly productReportModel: Model<ProductReportDocument>,
-    @InjectModel(AuditLog.name) private readonly auditLogModel: Model<AuditLogDocument>,
+    @InjectModel(AuditLog.name)
+    private readonly auditLogModel: Model<AuditLogDocument>,
     @InjectModel(Notification.name)
     private readonly notificationModel: Model<NotificationDocument>,
     @InjectModel(ReturnRequest.name)
@@ -149,7 +177,10 @@ export class SeedService {
     this.logger.log('Demo seed data cleared.');
   }
 
-  private async seedUsers(hashedPassword: string, ctx: SeedContext): Promise<void> {
+  private async seedUsers(
+    hashedPassword: string,
+    ctx: SeedContext,
+  ): Promise<void> {
     for (const user of SEED_USERS) {
       const doc = await this.userModel.findOneAndUpdate(
         { email: user.email },
@@ -176,15 +207,36 @@ export class SeedService {
 
   private async seedCategories(ctx: SeedContext): Promise<void> {
     for (const category of SEED_CATEGORIES) {
+      const { parentSlug, status, ...rest } = category;
+      const parentCategoryId = parentSlug
+        ? ctx.categories[parentSlug]
+        : undefined;
+      const categoryStatus = status ?? 'active';
+
+      const update: {
+        $set: Record<string, unknown>;
+        $unset?: Record<string, ''>;
+      } = {
+        $set: {
+          name: rest.name,
+          slug: rest.slug,
+          description: rest.description,
+          image: rest.image,
+          status: categoryStatus,
+          isActive: categoryStatus === 'active',
+          isDemoSeed: true,
+        },
+      };
+
+      if (parentCategoryId) {
+        update.$set.parentCategory = new Types.ObjectId(parentCategoryId);
+      } else {
+        update.$unset = { parentCategory: '' };
+      }
+
       const doc = await this.categoryModel.findOneAndUpdate(
         { slug: category.slug },
-        {
-          $set: {
-            ...category,
-            isActive: true,
-            isDemoSeed: true,
-          },
-        },
+        update,
         { upsert: true, new: true },
       );
       ctx.categories[category.slug] = doc._id.toString();
@@ -288,7 +340,9 @@ export class SeedService {
       if (!product) continue;
       await this.wishlistModel.findOneAndUpdate(
         { userId, productId: product._id.toString() },
-        { $set: { userId, productId: product._id.toString(), isDemoSeed: true } },
+        {
+          $set: { userId, productId: product._id.toString(), isDemoSeed: true },
+        },
         { upsert: true },
       );
     }
@@ -315,7 +369,10 @@ export class SeedService {
       variantValue?: string;
     }>;
 
-    const totalAmount = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    const totalAmount = items.reduce(
+      (sum, item) => sum + item.price * item.quantity,
+      0,
+    );
 
     await this.cartModel.findOneAndUpdate(
       { userId, isDemoSeed: true },
@@ -332,7 +389,9 @@ export class SeedService {
       if (!product) continue;
       await this.recentlyViewedModel.findOneAndUpdate(
         { userId, productId: product._id.toString() },
-        { $set: { userId, productId: product._id.toString(), isDemoSeed: true } },
+        {
+          $set: { userId, productId: product._id.toString(), isDemoSeed: true },
+        },
         { upsert: true },
       );
     }
@@ -371,7 +430,10 @@ export class SeedService {
         variantDetails?: string;
       }>;
 
-      const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+      const subtotal = items.reduce(
+        (sum, item) => sum + item.price * item.quantity,
+        0,
+      );
       const merchantIds = [...new Set(items.map((item) => item.merchantId))];
       const fulfillmentStatus =
         orderDef.fulfillmentStatus ?? MerchantFulfillmentStatus.PENDING;
@@ -381,7 +443,9 @@ export class SeedService {
         status: fulfillmentStatus,
         ...(fulfillmentStatus === MerchantFulfillmentStatus.SHIPPED
           ? {
-              shippedAt: orderDef.shippedAt ? new Date(orderDef.shippedAt) : new Date(),
+              shippedAt: orderDef.shippedAt
+                ? new Date(orderDef.shippedAt)
+                : new Date(),
               trackingNumber: orderDef.trackingNumber ?? 'DEMO-TRACK-001',
               carrier: 'Demo Express',
             }
@@ -424,16 +488,22 @@ export class SeedService {
             shippingCharge: 0,
             discountAmount: 0,
             totalAmount: subtotal,
-            paymentMethod: orderDef.paymentMethod as PaymentMethod,
-            paymentStatus: orderDef.paymentStatus as PaymentStatus,
-            orderStatus: orderDef.orderStatus as OrderStatus,
+            paymentMethod: orderDef.paymentMethod,
+            paymentStatus: orderDef.paymentStatus,
+            orderStatus: orderDef.orderStatus,
             merchantIds,
             merchantFulfillments,
             stockRestored: orderDef.orderStatus === 'cancelled',
             paidAt: orderDef.paidAt ? new Date(orderDef.paidAt) : undefined,
-            shippedAt: orderDef.shippedAt ? new Date(orderDef.shippedAt) : undefined,
-            deliveredAt: orderDef.deliveredAt ? new Date(orderDef.deliveredAt) : undefined,
-            cancelledAt: orderDef.cancelledAt ? new Date(orderDef.cancelledAt) : undefined,
+            shippedAt: orderDef.shippedAt
+              ? new Date(orderDef.shippedAt)
+              : undefined,
+            deliveredAt: orderDef.deliveredAt
+              ? new Date(orderDef.deliveredAt)
+              : undefined,
+            cancelledAt: orderDef.cancelledAt
+              ? new Date(orderDef.cancelledAt)
+              : undefined,
             cancelReason: orderDef.cancelReason,
             trackingNumber: orderDef.trackingNumber,
             isDemoSeed: true,
@@ -454,7 +524,12 @@ export class SeedService {
       if (!userId || !product || !orderId) continue;
 
       await this.reviewModel.findOneAndUpdate(
-        { userId, productId: product._id.toString(), orderId, isDemoSeed: true },
+        {
+          userId,
+          productId: product._id.toString(),
+          orderId,
+          isDemoSeed: true,
+        },
         {
           $set: {
             userId,
@@ -474,7 +549,9 @@ export class SeedService {
   }
 
   private async recomputeProductRatings(): Promise<void> {
-    const demoReviews = await this.reviewModel.find({ isDemoSeed: true }).lean();
+    const demoReviews = await this.reviewModel
+      .find({ isDemoSeed: true })
+      .lean();
     const byProduct = new Map<string, { sum: number; count: number }>();
 
     for (const review of demoReviews) {
@@ -525,7 +602,9 @@ export class SeedService {
         { upsert: true },
       );
     }
-    this.logger.log(`Inventory transactions: ${SEED_INVENTORY_ADJUSTMENTS.length}`);
+    this.logger.log(
+      `Inventory transactions: ${SEED_INVENTORY_ADJUSTMENTS.length}`,
+    );
   }
 
   private async seedProductReports(ctx: SeedContext): Promise<void> {
@@ -557,7 +636,8 @@ export class SeedService {
       let resourceId = 'demo';
 
       if (log.productSlug) {
-        resourceId = ctx.products[log.productSlug]?._id.toString() ?? log.productSlug;
+        resourceId =
+          ctx.products[log.productSlug]?._id.toString() ?? log.productSlug;
       } else if (log.couponCode) {
         resourceId = ctx.coupons[log.couponCode] ?? log.couponCode;
       }

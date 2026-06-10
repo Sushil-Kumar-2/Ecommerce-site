@@ -20,12 +20,17 @@ import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { OptionalJwtAuthGuard } from '../auth/guards/optional-jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { UserRole } from '../auth/roles.enum';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import type { JwtUser } from '../auth/interfaces/jwt-user.interface';
 import { ProductFilterDto } from './dto/product-filter.dto';
 import {
   SWAGGER_BEARER_AUTH,
   ApiBadRequestResponse,
+  ApiForbiddenResponse,
   ApiNotFoundResponse,
   ApiUnauthorizedResponse,
 } from '../common/swagger/swagger.constants';
@@ -36,11 +41,13 @@ export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
   @Post()
-  @UseGuards(JwtAuthGuard)
+  @Roles(UserRole.MERCHANT)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @ApiBearerAuth(SWAGGER_BEARER_AUTH)
   @ApiOperation({ summary: 'Create a new product (merchant)' })
   @ApiResponse({ status: 201, description: 'Product created' })
   @ApiResponse(ApiUnauthorizedResponse)
+  @ApiResponse(ApiForbiddenResponse)
   @ApiResponse(ApiBadRequestResponse)
   create(
     @Body() createProductDto: CreateProductDto,
@@ -50,13 +57,15 @@ export class ProductsController {
   }
 
   @Get('my-products')
-  @UseGuards(JwtAuthGuard)
+  @Roles(UserRole.MERCHANT)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @ApiBearerAuth(SWAGGER_BEARER_AUTH)
   @ApiOperation({
     summary: 'List products owned by the authenticated merchant',
   })
   @ApiResponse({ status: 200, description: 'Merchant product list' })
   @ApiResponse(ApiUnauthorizedResponse)
+  @ApiResponse(ApiForbiddenResponse)
   findMyProducts(@CurrentUser() user: JwtUser) {
     return this.productsService.findMyProducts(user.userId);
   }
@@ -94,25 +103,39 @@ export class ProductsController {
   }
 
   @Get(':id')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth(SWAGGER_BEARER_AUTH)
-  @ApiOperation({ summary: 'Get product details by ID' })
+  @UseGuards(OptionalJwtAuthGuard)
+  @ApiOperation({ summary: 'Get product details by ID (public for approved)' })
   @ApiParam({ name: 'id', description: 'Product MongoDB ObjectId' })
   @ApiResponse({ status: 200, description: 'Product details' })
   @ApiResponse(ApiNotFoundResponse)
-  @ApiResponse(ApiUnauthorizedResponse)
-  findOne(@Param('id') id: string, @CurrentUser() user: JwtUser) {
-    return this.productsService.findOne(id, user.userId);
+  findOne(@Param('id') id: string, @CurrentUser() user?: JwtUser | null) {
+    return this.productsService.findOnePublic(id, user ?? undefined);
+  }
+
+  @Patch(':id/submit')
+  @Roles(UserRole.MERCHANT)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @ApiBearerAuth(SWAGGER_BEARER_AUTH)
+  @ApiOperation({ summary: 'Submit product for admin review (merchant)' })
+  @ApiParam({ name: 'id', description: 'Product MongoDB ObjectId' })
+  @ApiResponse({ status: 200, description: 'Product submitted for review' })
+  @ApiResponse(ApiNotFoundResponse)
+  @ApiResponse(ApiForbiddenResponse)
+  @ApiResponse(ApiBadRequestResponse)
+  submitForReview(@Param('id') id: string, @CurrentUser() user: JwtUser) {
+    return this.productsService.submitForReview(id, user.userId);
   }
 
   @Patch(':id')
-  @UseGuards(JwtAuthGuard)
+  @Roles(UserRole.MERCHANT)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @ApiBearerAuth(SWAGGER_BEARER_AUTH)
   @ApiOperation({ summary: 'Update a product (owner merchant)' })
   @ApiParam({ name: 'id', description: 'Product MongoDB ObjectId' })
   @ApiResponse({ status: 200, description: 'Updated product' })
   @ApiResponse(ApiNotFoundResponse)
   @ApiResponse(ApiUnauthorizedResponse)
+  @ApiResponse(ApiForbiddenResponse)
   @ApiResponse(ApiBadRequestResponse)
   update(
     @Param('id') id: string,
@@ -123,13 +146,15 @@ export class ProductsController {
   }
 
   @Delete(':id')
-  @UseGuards(JwtAuthGuard)
+  @Roles(UserRole.MERCHANT)
+  @UseGuards(JwtAuthGuard, RolesGuard)
   @ApiBearerAuth(SWAGGER_BEARER_AUTH)
   @ApiOperation({ summary: 'Delete a product (owner merchant)' })
   @ApiParam({ name: 'id', description: 'Product MongoDB ObjectId' })
   @ApiResponse({ status: 200, description: 'Product deleted' })
   @ApiResponse(ApiNotFoundResponse)
   @ApiResponse(ApiUnauthorizedResponse)
+  @ApiResponse(ApiForbiddenResponse)
   remove(@Param('id') id: string, @CurrentUser() user: JwtUser) {
     return this.productsService.remove(id, user.userId);
   }

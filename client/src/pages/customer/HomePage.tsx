@@ -1,10 +1,9 @@
+import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowRight, Grid3X3 } from 'lucide-react'
 
-import {
-  HeroCarousel,
-  ProductRow,
-} from '@/components/storefront'
+import { SectionError } from '@/components/common/SectionError'
+import { HeroCarousel, ProductRow } from '@/components/storefront'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useRecentlyViewed } from '@/features/recently-viewed'
@@ -15,6 +14,7 @@ import {
   useTopRatedProducts,
 } from '@/features/products/hooks'
 import type { Product } from '@/features/products/product.types'
+import { buildCategoryMap } from '@/features/products/utils'
 import { ROUTES } from '@/utils/routes'
 
 function mapRecentlyViewedToProducts(
@@ -49,21 +49,41 @@ function mapRecentlyViewedToProducts(
 }
 
 export function HomePage() {
-  const { data: categories = [], isLoading: isCategoriesLoading } = useCategories()
-  const { data: bestSellers = [], isLoading: isBestSellersLoading } = useBestSellers()
-  const { data: featuredData, isLoading: isFeaturedLoading } = useFeaturedProducts()
-  const { data: topRated = [], isLoading: isTopRatedLoading } = useTopRatedProducts()
+  const {
+    data: categories = [],
+    isLoading: isCategoriesLoading,
+    error: categoriesError,
+    refetch: refetchCategories,
+  } = useCategories()
+  const {
+    data: bestSellers = [],
+    isLoading: isBestSellersLoading,
+    error: bestSellersError,
+    refetch: refetchBestSellers,
+  } = useBestSellers()
+  const {
+    data: featuredData,
+    isLoading: isFeaturedLoading,
+    error: featuredError,
+    refetch: refetchFeatured,
+  } = useFeaturedProducts()
+  const {
+    data: topRated = [],
+    isLoading: isTopRatedLoading,
+    error: topRatedError,
+    refetch: refetchTopRated,
+  } = useTopRatedProducts()
   const { data: recentlyViewed = [] } = useRecentlyViewed()
 
   const featuredProducts = featuredData?.data ?? []
-
   const recentProducts = mapRecentlyViewedToProducts(recentlyViewed)
+  const categoryMap = useMemo(() => buildCategoryMap(categories), [categories])
 
   return (
     <div className="space-y-8 pb-10">
       <HeroCarousel />
 
-      <section className="mx-auto max-w-7xl px-4">
+      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="font-heading text-lg font-semibold">Shop by category</h2>
           <Button variant="ghost" size="sm" asChild>
@@ -79,6 +99,13 @@ export function HomePage() {
               <Skeleton key={i} className="aspect-square rounded-xl" />
             ))}
           </div>
+        ) : categoriesError ? (
+          <SectionError
+            message="Failed to load categories."
+            onRetry={() => void refetchCategories()}
+          />
+        ) : categories.length === 0 ? (
+          <p className="text-center text-sm text-muted-foreground">No categories available.</p>
         ) : (
           <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8">
             {categories.slice(0, 8).map((category) => (
@@ -106,54 +133,82 @@ export function HomePage() {
       </section>
 
       {isBestSellersLoading ? (
-        <div className="mx-auto max-w-7xl px-4">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <Skeleton className="h-64 w-full rounded-xl" />
         </div>
+      ) : bestSellersError ? (
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <SectionError
+            message="Failed to load best sellers."
+            onRetry={() => void refetchBestSellers()}
+          />
+        </div>
       ) : bestSellers.length > 0 ? (
-        <div className="mx-auto max-w-7xl px-4">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <ProductRow
             title="Best sellers"
             products={bestSellers}
+            categoryMap={categoryMap}
             viewAllHref={ROUTES.products}
           />
         </div>
       ) : null}
 
       {isFeaturedLoading ? (
-        <div className="mx-auto max-w-7xl px-4">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <Skeleton className="h-64 w-full rounded-xl" />
         </div>
+      ) : featuredError ? (
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <SectionError
+            message="Failed to load featured deals."
+            onRetry={() => void refetchFeatured()}
+          />
+        </div>
       ) : featuredProducts.length > 0 ? (
-        <div className="mx-auto max-w-7xl">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <ProductRow
             title="Featured deals"
             products={featuredProducts}
+            categoryMap={categoryMap}
             viewAllHref={`${ROUTES.products}?featured=true`}
           />
         </div>
       ) : null}
 
       {isTopRatedLoading ? (
-        <div className="mx-auto max-w-7xl px-4">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <Skeleton className="h-64 w-full rounded-xl" />
         </div>
+      ) : topRatedError ? (
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <SectionError
+            message="Failed to load top rated products."
+            onRetry={() => void refetchTopRated()}
+          />
+        </div>
       ) : topRated.length > 0 ? (
-        <div className="mx-auto max-w-7xl px-4">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <ProductRow
             title="Top rated"
             products={topRated}
+            categoryMap={categoryMap}
             viewAllHref={`${ROUTES.products}?sort=top_rated`}
           />
         </div>
       ) : null}
 
       {recentProducts.length > 0 ? (
-        <div className="mx-auto max-w-7xl px-4">
-          <ProductRow title="Recently viewed" products={recentProducts} />
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <ProductRow
+            title="Recently viewed"
+            products={recentProducts}
+            categoryMap={categoryMap}
+          />
         </div>
       ) : null}
 
-      <section className="mx-auto max-w-7xl px-4">
+      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="rounded-xl bg-brand-primary p-8 text-center text-white">
           <h2 className="font-heading text-2xl font-bold">Explore thousands of products</h2>
           <p className="mt-2 text-white/80">

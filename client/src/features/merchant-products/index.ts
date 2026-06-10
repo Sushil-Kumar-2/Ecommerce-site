@@ -5,6 +5,7 @@ export {
   useCreateProductMutation,
   useUpdateProductMutation,
   useDeleteProductMutation,
+  useSubmitProductMutation,
   useGetMerchantCategoriesQuery,
 } from './merchantProductsApi'
 export {
@@ -14,6 +15,7 @@ export {
   useCreateProduct,
   useUpdateProduct,
   useDeleteProduct,
+  useSubmitProduct,
   useUpdateStock,
 } from './hooks'
 export { ProductForm } from './components/ProductForm'

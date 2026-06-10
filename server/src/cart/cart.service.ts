@@ -11,7 +11,6 @@ import { Cart, CartDocument } from './schemas/cart.schema';
 import { ProductsService } from '../products/products.service';
 
 import {
-  CartItemAvailabilityStatus,
   EnrichedCartItem,
   EnrichedCartResponse,
 } from './interfaces/enriched-cart.interface';
@@ -34,6 +33,8 @@ export class CartService {
       throw new NotFoundException('Product not found');
     }
 
+    const unitPrice = this.getEffectivePrice(product);
+
     const cart = await this.cartModel.findOne({
       userId,
     });
@@ -48,7 +49,7 @@ export class CartService {
 
             quantity: addToCartDto.quantity,
 
-            price: product.price,
+            price: unitPrice,
 
             variantName: addToCartDto.variantName,
 
@@ -56,7 +57,7 @@ export class CartService {
           },
         ],
 
-        totalAmount: product.price * addToCartDto.quantity,
+        totalAmount: unitPrice * addToCartDto.quantity,
       });
 
       return newCart.save();
@@ -71,13 +72,14 @@ export class CartService {
 
     if (existingItem) {
       existingItem.quantity += addToCartDto.quantity;
+      existingItem.price = unitPrice;
     } else {
       cart.items.push({
         productId: product._id.toString(),
 
         quantity: addToCartDto.quantity,
 
-        price: product.price,
+        price: unitPrice,
 
         variantName: addToCartDto.variantName,
 
@@ -85,7 +87,10 @@ export class CartService {
       });
     }
 
-    cart.totalAmount += product.price * addToCartDto.quantity;
+    cart.totalAmount = cart.items.reduce(
+      (total, item) => total + item.price * item.quantity,
+      0,
+    );
 
     await cart.save();
 
@@ -105,13 +110,74 @@ export class CartService {
       return null;
     }
 
+    await this.syncCartPrices(cart);
+
     return this.buildEnrichedCart(cart);
   }
 
   /** Raw cart document — used internally by order flow. */
 
   async findRawCart(userId: string) {
-    return this.cartModel.findOne({ userId });
+    const cart = await this.cartModel.findOne({ userId });
+
+    if (!cart) {
+      return null;
+    }
+
+    await this.syncCartPrices(cart);
+
+    return cart;
+  }
+
+  private getEffectivePrice(product: {
+    price: number;
+    discountPrice?: number;
+  }): number {
+    const discountPrice = product.discountPrice ?? 0;
+    return discountPrice > 0 ? discountPrice : product.price;
+  }
+
+  private async syncCartPrices(cart: CartDocument): Promise<void> {
+    if (cart.items.length === 0) {
+      return;
+    }
+
+    const productIds = cart.items.map((item) => String(item.productId));
+    const products = await this.productsService.findByIds(productIds);
+    const productMap = new Map(
+      products.map((product) => [product._id.toString(), product]),
+    );
+
+    let changed = false;
+
+    for (const item of cart.items) {
+      const product = productMap.get(String(item.productId));
+
+      if (!product) {
+        continue;
+      }
+
+      const unitPrice = this.getEffectivePrice(product);
+
+      if (item.price !== unitPrice) {
+        item.price = unitPrice;
+        changed = true;
+      }
+    }
+
+    const nextTotal = cart.items.reduce(
+      (total, item) => total + item.price * item.quantity,
+      0,
+    );
+
+    if (cart.totalAmount !== nextTotal) {
+      cart.totalAmount = nextTotal;
+      changed = true;
+    }
+
+    if (changed) {
+      await cart.save();
+    }
   }
 
   private resolveItemAvailability(
@@ -215,13 +281,7 @@ export class CartService {
 
     item.quantity = quantity;
 
-    cart.totalAmount = cart.items.reduce(
-      (total, item) => total + item.price * item.quantity,
-
-      0,
-    );
-
-    await cart.save();
+    await this.syncCartPrices(cart);
 
     return this.buildEnrichedCart(cart);
   }
@@ -237,13 +297,7 @@ export class CartService {
 
     cart.items = cart.items.filter((item) => item.productId !== productId);
 
-    cart.totalAmount = cart.items.reduce(
-      (total, item) => total + item.price * item.quantity,
-
-      0,
-    );
-
-    await cart.save();
+    await this.syncCartPrices(cart);
 
     return this.buildEnrichedCart(cart);
   }
@@ -262,5 +316,80 @@ export class CartService {
     await cart.save({ session: session ?? undefined });
 
     return cart;
+  }
+
+  /** Re-populates cart from a failed online payment order when the cart is empty. */
+  async restoreCartFromOrder(
+    userId: string,
+    orderItems: {
+      productId: string;
+      quantity: number;
+      price: number;
+      variantDetails?: string;
+    }[],
+  ) {
+    if (orderItems.length === 0) {
+      return null;
+    }
+
+    const existing = await this.cartModel.findOne({ userId });
+
+    if (existing && existing.items.length > 0) {
+      return existing;
+    }
+
+    const items = orderItems.map((item) => {
+      const { variantName, variantValue } = this.parseVariantDetails(
+        item.variantDetails,
+      );
+
+      return {
+        productId: item.productId,
+        quantity: item.quantity,
+        price: item.price,
+        variantName,
+        variantValue,
+      };
+    });
+
+    const totalAmount = items.reduce(
+      (total, item) => total + item.price * item.quantity,
+      0,
+    );
+
+    if (existing) {
+      existing.items = items;
+      existing.totalAmount = totalAmount;
+      await existing.save();
+      return existing;
+    }
+
+    const newCart = new this.cartModel({
+      userId,
+      items,
+      totalAmount,
+    });
+
+    return newCart.save();
+  }
+
+  private parseVariantDetails(variantDetails?: string): {
+    variantName?: string;
+    variantValue?: string;
+  } {
+    if (!variantDetails) {
+      return {};
+    }
+
+    const separatorIndex = variantDetails.indexOf(': ');
+
+    if (separatorIndex === -1) {
+      return {};
+    }
+
+    return {
+      variantName: variantDetails.slice(0, separatorIndex),
+      variantValue: variantDetails.slice(separatorIndex + 2),
+    };
   }
 }

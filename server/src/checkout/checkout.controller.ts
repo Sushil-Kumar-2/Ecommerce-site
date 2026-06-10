@@ -23,7 +23,9 @@ export class CheckoutController {
   constructor(private readonly checkoutService: CheckoutService) {}
 
   @Get()
-  @ApiOperation({ summary: 'Get checkout preview with cart, addresses, and totals' })
+  @ApiOperation({
+    summary: 'Get checkout preview with cart, addresses, and totals',
+  })
   @ApiResponse({ status: 200, description: 'Checkout preview payload' })
   @ApiResponse(ApiUnauthorizedResponse)
   getPreview(

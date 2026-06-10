@@ -109,10 +109,14 @@ export function GlobalSearch({
 
   return (
     <div ref={containerRef} className={cn('relative w-full', className)}>
-      <form onSubmit={handleSubmit} className="flex w-full items-center gap-0">
+      <form onSubmit={handleSubmit} className="flex w-full items-center">
         <div className="relative flex-1">
+          <Search
+            className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
+            aria-hidden
+          />
           <Input
-            type="search"
+            type="text"
             value={query}
             onChange={(event) => {
               setQuery(event.target.value)
@@ -122,7 +126,7 @@ export function GlobalSearch({
             onFocus={() => setIsOpen(true)}
             onKeyDown={handleKeyDown}
             placeholder={placeholder}
-            className="h-9 rounded-r-none border-brand-primary/20 pr-10 focus-visible:border-brand-primary focus-visible:ring-brand-primary/30"
+            className="h-10 rounded-r-none border-border/80 bg-background pl-10 pr-4 shadow-sm focus-visible:border-brand-primary focus-visible:ring-brand-primary/20"
             aria-label="Search products"
             aria-expanded={showDropdown}
             aria-autocomplete="list"
@@ -131,16 +135,17 @@ export function GlobalSearch({
         </div>
         <Button
           type="submit"
-          className="h-9 rounded-l-none bg-brand-primary px-4 hover:bg-brand-primary/90"
+          className="h-10 rounded-l-none px-5 shadow-sm transition-colors bg-brand-primary hover:bg-brand-primary/90"
           aria-label="Search"
         >
-          <Search />
+          <Search className="size-4" />
+          <span className="sr-only md:not-sr-only md:ml-2">Search</span>
         </Button>
       </form>
 
       {showDropdown ? (
         <div
-          className="absolute top-full z-50 mt-1 w-full overflow-hidden rounded-lg border bg-popover shadow-lg"
+          className="absolute top-full z-50 mt-1.5 w-full overflow-hidden rounded-xl border bg-popover shadow-lg"
           role="listbox"
         >
           {isFetching && suggestions.length === 0 ? (
@@ -158,7 +163,7 @@ export function GlobalSearch({
                 role="option"
                 aria-selected={highlightIndex === index}
                 className={cn(
-                  'flex w-full items-center gap-3 px-3 py-2 text-left text-sm transition-colors hover:bg-muted',
+                  'flex w-full items-center gap-3 px-3 py-2.5 text-left text-sm transition-colors hover:bg-muted',
                   highlightIndex === index && 'bg-muted',
                 )}
                 onMouseEnter={() => setHighlightIndex(index)}
@@ -167,9 +172,9 @@ export function GlobalSearch({
                   setIsOpen(false)
                 }}
               >
-                <div className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded border bg-white">
+                <div className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-md border bg-card">
                   {image ? (
-                    <img src={image} alt="" className="size-full object-contain p-0.5" />
+                    <img src={image} alt="" className="size-full object-cover" />
                   ) : (
                     <Search className="size-4 text-muted-foreground" />
                   )}
@@ -181,7 +186,7 @@ export function GlobalSearch({
           {suggestions.length > 0 ? (
             <button
               type="button"
-              className="w-full border-t px-4 py-2 text-left text-sm font-medium text-brand-primary hover:bg-muted"
+              className="w-full border-t px-4 py-2.5 text-left text-sm font-medium text-brand-primary transition-colors hover:bg-muted"
               onClick={() => navigateToSearch(query)}
             >
               See all results for &quot;{query.trim()}&quot;

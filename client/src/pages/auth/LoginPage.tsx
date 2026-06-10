@@ -1,7 +1,8 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Loader2 } from 'lucide-react'
+import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { toast } from 'sonner'
 
 import { PageContainer } from '@/components/common/PageContainer'
@@ -17,6 +18,7 @@ import {
 } from '@/components/ui/card'
 import { Form } from '@/components/ui/form'
 import {
+  GoogleSignInButton,
   loginSchema,
   useLoginMutation,
   type LoginFormValues,
@@ -27,15 +29,33 @@ import { getApiErrorMessage } from '@/utils/api-error'
 import { decodeJwtPayload, mapJwtPayloadToAuthUser } from '@/utils/jwt'
 import { getDefaultRouteForRole, ROUTES } from '@/utils/routes'
 
+const GOOGLE_ERROR_MESSAGES: Record<string, string> = {
+  merchant_pending: 'Your seller application is still under review.',
+  account_blocked: 'Your account has been blocked. Please contact support.',
+  google_failed: 'Google sign-in failed. Please try again.',
+}
+
 export function LoginPage() {
   const navigate = useNavigate()
   const location = useLocation()
+  const [searchParams, setSearchParams] = useSearchParams()
   const dispatch = useAppDispatch()
   const [login, { isLoading }] = useLoginMutation()
 
   const redirectPath =
     (location.state as { from?: { pathname: string } } | null)?.from?.pathname ??
     null
+
+  useEffect(() => {
+    const error = searchParams.get('error')
+
+    if (!error) {
+      return
+    }
+
+    toast.error(GOOGLE_ERROR_MESSAGES[error] ?? GOOGLE_ERROR_MESSAGES.google_failed)
+    setSearchParams({}, { replace: true })
+  }, [searchParams, setSearchParams])
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -118,6 +138,15 @@ export function LoginPage() {
                   'Sign in'
                 )}
               </Button>
+              <div className="relative py-2">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-card px-2 text-muted-foreground">Or</span>
+                </div>
+              </div>
+              <GoogleSignInButton />
             </form>
           </Form>
         </CardContent>

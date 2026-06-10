@@ -20,6 +20,7 @@ import { cn } from '@/lib/utils'
 import { UserRole } from '@/types/auth.types'
 import { getDefaultRouteForRole, ROUTES } from '@/utils/routes'
 
+import { ThemeToggle } from './ThemeToggle'
 import { DashboardMobileNav, type SidebarNavItem } from './AppSidebar'
 
 interface HeaderProps {
@@ -78,6 +79,7 @@ export function Header({ variant = 'customer', sidebarNav }: HeaderProps) {
         </div>
 
         <div className="flex items-center gap-2">
+          <ThemeToggle />
           {isAuthenticated && variant === 'customer' ? (
             <>
               <NotificationDropdown />

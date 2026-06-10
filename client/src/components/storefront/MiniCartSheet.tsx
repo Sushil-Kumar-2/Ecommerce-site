@@ -14,18 +14,37 @@ import {
 import { useAuth } from '@/features/auth'
 import { useCart, useCartItemCount } from '@/features/cart'
 import { formatPrice } from '@/features/products/utils'
+import { cn } from '@/lib/utils'
 import { ROUTES } from '@/utils/routes'
 
-export function MiniCartSheet() {
+interface MiniCartSheetProps {
+  variant?: 'icon' | 'header'
+}
+
+export function MiniCartSheet({ variant = 'icon' }: MiniCartSheetProps) {
   const { isAuthenticated } = useAuth()
   const cartCount = useCartItemCount()
   const { data: cart } = useCart()
 
+  const triggerClass =
+    variant === 'header'
+      ? 'hidden h-auto min-w-[3.5rem] flex-col gap-0.5 px-2.5 py-1.5 text-foreground hover:bg-muted md:flex'
+      : 'relative'
+
   if (!isAuthenticated) {
     return (
-      <Button variant="ghost" size="icon" asChild aria-label="Shopping cart">
+      <Button
+        variant="ghost"
+        size={variant === 'header' ? 'default' : 'icon'}
+        className={triggerClass}
+        asChild
+        aria-label="Shopping cart"
+      >
         <Link to={ROUTES.login}>
-          <ShoppingCart />
+          <ShoppingCart className="size-5" />
+          {variant === 'header' ? (
+            <span className="text-[10px] font-medium leading-tight">Cart</span>
+          ) : null}
         </Link>
       </Button>
     )
@@ -37,10 +56,23 @@ export function MiniCartSheet() {
   return (
     <Sheet>
       <SheetTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative" aria-label="Shopping cart">
-          <ShoppingCart />
+        <Button
+          variant="ghost"
+          size={variant === 'header' ? 'default' : 'icon'}
+          className={cn('relative', triggerClass)}
+          aria-label="Shopping cart"
+        >
+          <ShoppingCart className="size-5" />
+          {variant === 'header' ? (
+            <span className="text-[10px] font-medium leading-tight">Cart</span>
+          ) : null}
           {cartCount > 0 ? (
-            <Badge className="absolute -top-1 -right-1 size-5 min-w-5 bg-brand-primary px-1 text-[10px]">
+            <Badge
+              className={cn(
+                'absolute bg-brand-primary px-1 text-[10px] text-white',
+                variant === 'header' ? '-top-0.5 -right-0.5 size-4 min-w-4' : '-top-1 -right-1 size-5 min-w-5',
+              )}
+            >
               {cartCount > 99 ? '99+' : cartCount}
             </Badge>
           ) : null}

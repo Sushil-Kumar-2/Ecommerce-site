@@ -150,6 +150,9 @@ export function AdminCategoriesPage() {
             </DialogTitle>
           </DialogHeader>
           <CategoryForm
+            parentOptions={categories
+              .filter((category) => category._id !== editingCategory?._id)
+              .map((category) => ({ _id: category._id, name: category.name }))}
             defaultValues={
               editingCategory
                 ? {
@@ -157,6 +160,8 @@ export function AdminCategoriesPage() {
                     slug: editingCategory.slug,
                     description: editingCategory.description ?? '',
                     image: editingCategory.image ?? '',
+                    parentCategory: editingCategory.parentCategory ?? '',
+                    status: editingCategory.status ?? (editingCategory.isActive ? 'active' : 'inactive'),
                     isActive: editingCategory.isActive,
                   }
                 : undefined

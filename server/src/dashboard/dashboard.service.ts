@@ -10,7 +10,7 @@ import {
   Category,
   CategoryDocument,
 } from '../categories/schemas/category.schema';
-import { Model } from 'mongoose';
+import { isValidObjectId, Model } from 'mongoose';
 import {
   AdminDashboardResponse,
   AdminMonthlyRevenueItem,
@@ -274,7 +274,9 @@ export class DashboardService {
   private async enrichTopCategories(
     rows: TopCategoryAggregate[],
   ): Promise<AdminTopCategoryItem[]> {
-    const categoryIds = rows.map((row) => row._id);
+    const categoryIds = rows
+      .map((row) => row._id)
+      .filter((id) => isValidObjectId(id));
     const categories = await this.categoryModel
       .find({ _id: { $in: categoryIds } })
       .select('name')

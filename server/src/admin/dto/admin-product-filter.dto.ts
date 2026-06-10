@@ -13,7 +13,10 @@ export class AdminProductFilterDto {
   @IsString()
   limit?: string;
 
-  @ApiPropertyOptional({ example: 'pending', enum: ['draft', 'pending', 'approved', 'rejected'] })
+  @ApiPropertyOptional({
+    example: 'pending',
+    enum: ['draft', 'pending', 'approved', 'rejected'],
+  })
   @IsOptional()
   @IsString()
   status?: string;

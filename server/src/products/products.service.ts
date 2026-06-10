@@ -1,12 +1,15 @@
 import {
   Injectable,
+  BadRequestException,
   ForbiddenException,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, PipelineStage, isValidObjectId } from 'mongoose';
+import { Model, PipelineStage, Types, isValidObjectId } from 'mongoose';
 
 import { Product, ProductDocument } from './schemas/product.schema';
+import { User, UserDocument } from '../users/schemas/user.schema';
+import type { JwtUser } from '../auth/interfaces/jwt-user.interface';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { InsufficientStockException } from '../common/exceptions/insufficient-stock.exception';
@@ -30,6 +33,8 @@ export class ProductsService {
   constructor(
     @InjectModel(Product.name)
     private readonly productModel: Model<Product>,
+    @InjectModel(User.name)
+    private readonly userModel: Model<UserDocument>,
     private readonly recentlyViewedService: RecentlyViewedService,
     private readonly notificationEvents: NotificationEventsService,
     private readonly inventoryService: InventoryService,
@@ -148,8 +153,8 @@ export class ProductsService {
       match.featured = filters.featured === 'true';
     }
 
-    if (filters.merchantId) {
-      match.merchantId = filters.merchantId;
+    if (filters.merchantId && isValidObjectId(filters.merchantId)) {
+      match.merchantId = new Types.ObjectId(filters.merchantId);
     }
 
     if (filters.inStock === 'true') {
@@ -170,8 +175,8 @@ export class ProductsService {
       ];
     }
 
-    if (filters.categoryId) {
-      match.categoryId = filters.categoryId;
+    if (filters.categoryId && isValidObjectId(filters.categoryId)) {
+      match.categoryId = new Types.ObjectId(filters.categoryId);
     }
 
     return match;
@@ -196,6 +201,10 @@ export class ProductsService {
   }
 
   async findOne(id: string, userId?: string) {
+    return this.findOnePublic(id, userId ? { userId } : undefined);
+  }
+
+  async findOnePublic(id: string, user?: JwtUser | { userId: string }) {
     if (!isValidObjectId(id)) {
       throw new NotFoundException('Product not found');
     }
@@ -206,9 +215,67 @@ export class ProductsService {
       throw new NotFoundException('Product not found');
     }
 
+    const userId = user && 'userId' in user ? user.userId : undefined;
+    const role = user && 'role' in user ? user.role : undefined;
+
+    const isOwner =
+      userId && product.merchantId.toString() === userId.toString();
+    const isAdmin = role === 'admin';
+
+    if (product.status !== 'approved' && !isOwner && !isAdmin) {
+      throw new NotFoundException('Product not found');
+    }
+
     if (userId) {
       await this.recentlyViewedService.addView(userId, id);
     }
+
+    return product;
+  }
+
+  async submitForReview(id: string, merchantId: string) {
+    const merchant = await this.userModel.findById(merchantId);
+
+    if (!merchant || merchant.role !== 'merchant') {
+      throw new ForbiddenException('Only merchants can submit products');
+    }
+
+    if (merchant.status !== 'active') {
+      throw new ForbiddenException(
+        'Your merchant account must be active to submit products',
+      );
+    }
+
+    const product = await this.productModel.findById(id);
+
+    if (!product) {
+      throw new NotFoundException('Product not found');
+    }
+
+    if (product.merchantId.toString() !== merchantId) {
+      throw new ForbiddenException('You can only submit your own products');
+    }
+
+    if (!['draft', 'rejected'].includes(product.status)) {
+      throw new BadRequestException(
+        `Cannot submit product with status "${product.status}"`,
+      );
+    }
+
+    product.status = 'pending';
+    await product.save();
+
+    await this.auditLogsService.createLog({
+      userId: merchantId,
+      role: 'merchant',
+      action: AuditAction.PRODUCT_UPDATED,
+      resource: AuditResource.PRODUCT,
+      resourceId: product._id.toString(),
+      metadata: {
+        title: product.title,
+        submittedForReview: true,
+      },
+    });
 
     return product;
   }
@@ -277,7 +344,7 @@ export class ProductsService {
       await this.inventoryService.recordTransaction({
         productId,
         quantity,
-        type: context.type as InventoryTransactionType,
+        type: context.type,
         previousStock,
         currentStock: product.stock,
         referenceId: context.referenceId,
@@ -322,7 +389,7 @@ export class ProductsService {
         await this.inventoryService.recordTransaction({
           productId,
           quantity,
-          type: context.type as InventoryTransactionType,
+          type: context.type,
           previousStock,
           currentStock: updated.stock,
           referenceId: context.referenceId,
@@ -413,6 +480,10 @@ export class ProductsService {
     }
     if (product.merchantId.toString() !== merchantId) {
       throw new ForbiddenException('You can only update your own products');
+    }
+
+    if (product.status === 'pending') {
+      throw new BadRequestException('Products pending review cannot be edited');
     }
 
     const previousStock = product.stock;

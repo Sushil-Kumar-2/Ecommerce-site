@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom'
 
 import { EmptyState } from '@/components/common/EmptyState'
 import { ErrorState } from '@/components/common/ErrorState'
-import { ProductRow } from '@/components/storefront'
+import { PageHeader, PageShell } from '@/components/design-system'
+import { ProductRow, StickyMobileCTA } from '@/components/storefront'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
@@ -41,29 +42,29 @@ export function CartPage() {
 
   if (isLoading) {
     return (
-      <div className="mx-auto max-w-7xl px-4 py-6">
-        <h1 className="mb-6 font-heading text-2xl font-semibold">Shopping Cart</h1>
+      <PageShell>
+        <PageHeader title="Shopping Cart" breadcrumbs={[{ label: 'Home', href: ROUTES.home }, { label: 'Cart' }]} />
         <CartPageSkeleton />
-      </div>
+      </PageShell>
     )
   }
 
   if (error) {
     return (
-      <div className="mx-auto max-w-7xl px-4 py-6">
-        <h1 className="mb-6 font-heading text-2xl font-semibold">Shopping Cart</h1>
+      <PageShell>
+        <PageHeader title="Shopping Cart" breadcrumbs={[{ label: 'Home', href: ROUTES.home }, { label: 'Cart' }]} />
         <ErrorState
           message={getApiErrorMessage(error, 'Failed to load your cart.')}
           onRetry={() => void refetch()}
         />
-      </div>
+      </PageShell>
     )
   }
 
   if (!cart || cart.items.length === 0) {
     return (
-      <div className="mx-auto max-w-7xl space-y-10 px-4 py-6">
-        <h1 className="font-heading text-2xl font-semibold">Shopping Cart</h1>
+      <PageShell className="space-y-10">
+        <PageHeader title="Shopping Cart" breadcrumbs={[{ label: 'Home', href: ROUTES.home }, { label: 'Cart' }]} />
         <EmptyState
           icon={ShoppingCart}
           title="Your cart is empty"
@@ -77,7 +78,7 @@ export function CartPage() {
         {recommended.length > 0 ? (
           <ProductRow title="Popular picks" products={recommended.slice(0, 8)} />
         ) : null}
-      </div>
+      </PageShell>
     )
   }
 
@@ -87,10 +88,11 @@ export function CartPage() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-6">
-      <h1 className="mb-6 font-heading text-2xl font-semibold">
-        Shopping Cart ({cart.items.length} item{cart.items.length === 1 ? '' : 's'})
-      </h1>
+    <PageShell className="pb-24 md:pb-8">
+      <PageHeader
+        title={`Shopping Cart (${cart.items.length} item${cart.items.length === 1 ? '' : 's'})`}
+        breadcrumbs={[{ label: 'Home', href: ROUTES.home }, { label: 'Cart' }]}
+      />
 
       <div className="grid gap-8 lg:grid-cols-[1fr_320px]">
         <div className="space-y-4">
@@ -196,7 +198,7 @@ export function CartPage() {
               <span className="text-muted-foreground">Subtotal</span>
               <span>{formatPrice(cart.totalAmount)}</span>
             </div>
-            <div className="flex justify-between text-emerald-600">
+            <div className="flex justify-between text-brand-deal">
               <span>Delivery</span>
               <span>FREE</span>
             </div>
@@ -206,13 +208,21 @@ export function CartPage() {
             <span className="text-xl font-semibold">{formatPrice(cart.totalAmount)}</span>
           </div>
 
-          <Button
-            asChild
-            className="w-full bg-brand-primary hover:bg-brand-primary/90"
-            disabled={!cart.canCheckout}
-          >
-            <Link to={ROUTES.checkout}>Proceed to Checkout</Link>
-          </Button>
+          {cart.canCheckout ? (
+            <Button
+              asChild
+              className="hidden w-full bg-brand-primary hover:bg-brand-primary/90 md:flex"
+            >
+              <Link to={ROUTES.checkout}>Proceed to Checkout</Link>
+            </Button>
+          ) : (
+            <Button
+              className="hidden w-full bg-brand-primary hover:bg-brand-primary/90 md:flex"
+              disabled
+            >
+              Proceed to Checkout
+            </Button>
+          )}
 
           <Button variant="outline" asChild className="w-full">
             <Link to={ROUTES.products}>Continue shopping</Link>
@@ -226,7 +236,25 @@ export function CartPage() {
           ) : null}
         </aside>
       </div>
-    </div>
+
+      <StickyMobileCTA>
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <p className="text-xs text-muted-foreground">Total</p>
+            <p className="text-lg font-semibold">{formatPrice(cart.totalAmount)}</p>
+          </div>
+          {cart.canCheckout ? (
+            <Button asChild className="flex-1 bg-brand-primary hover:bg-brand-primary/90">
+              <Link to={ROUTES.checkout}>Checkout</Link>
+            </Button>
+          ) : (
+            <Button className="flex-1" disabled>
+              Checkout
+            </Button>
+          )}
+        </div>
+      </StickyMobileCTA>
+    </PageShell>
   )
 }
 

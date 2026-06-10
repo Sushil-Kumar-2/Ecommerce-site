@@ -49,17 +49,18 @@ export function Pagination({ pagination, onPageChange, className }: PaginationPr
   return (
     <nav
       aria-label="Product pagination"
-      className={cn('flex flex-col items-center gap-3 sm:flex-row sm:justify-between', className)}
+      className={cn('mt-10 border-t border-border/60 pt-8', className)}
     >
-      <p className="text-sm text-muted-foreground">
-        Page {page} of {totalPages} ({total} products)
+      <p className="mb-4 text-center text-sm text-muted-foreground">
+        Page {page} of {totalPages} · {total.toLocaleString()} products
       </p>
 
-      <div className="flex items-center gap-1">
+      <div className="flex flex-wrap items-center justify-center gap-2">
         <Button
           type="button"
           variant="outline"
-          size="icon-sm"
+          size="icon"
+          className="size-9 rounded-lg border-border/80 shadow-sm transition-colors hover:border-brand-primary/40 hover:bg-muted"
           disabled={page <= 1}
           onClick={() => onPageChange(page - 1)}
           aria-label="Previous page"
@@ -67,29 +68,41 @@ export function Pagination({ pagination, onPageChange, className }: PaginationPr
           <ChevronLeft className="size-4" />
         </Button>
 
-        {pages.map((item, index) =>
-          item === 'ellipsis' ? (
-            <span key={`ellipsis-${index}`} className="px-2 text-muted-foreground">
-              ...
-            </span>
-          ) : (
-            <Button
-              key={item}
-              type="button"
-              variant={item === page ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => onPageChange(item)}
-              aria-current={item === page ? 'page' : undefined}
-            >
-              {item}
-            </Button>
-          ),
-        )}
+        <div className="flex flex-wrap items-center justify-center gap-1.5">
+          {pages.map((item, index) =>
+            item === 'ellipsis' ? (
+              <span
+                key={`ellipsis-${index}`}
+                className="flex size-9 items-center justify-center text-sm text-muted-foreground"
+              >
+                …
+              </span>
+            ) : (
+              <Button
+                key={item}
+                type="button"
+                variant={item === page ? 'default' : 'outline'}
+                size="sm"
+                className={cn(
+                  'size-9 min-w-9 rounded-lg p-0 text-sm font-medium shadow-sm transition-all',
+                  item === page
+                    ? 'border-brand-primary bg-brand-primary text-white hover:bg-brand-primary/90'
+                    : 'border-border/80 bg-background text-foreground hover:border-brand-primary/40 hover:bg-muted',
+                )}
+                onClick={() => onPageChange(item)}
+                aria-current={item === page ? 'page' : undefined}
+              >
+                {item}
+              </Button>
+            ),
+          )}
+        </div>
 
         <Button
           type="button"
           variant="outline"
-          size="icon-sm"
+          size="icon"
+          className="size-9 rounded-lg border-border/80 shadow-sm transition-colors hover:border-brand-primary/40 hover:bg-muted"
           disabled={page >= totalPages}
           onClick={() => onPageChange(page + 1)}
           aria-label="Next page"

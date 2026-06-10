@@ -56,11 +56,7 @@ export class CouponsController {
   @ApiResponse({ status: 200, description: 'Discount calculation result' })
   @ApiResponse(ApiBadRequestResponse)
   applyCoupon(@Body() dto: ApplyCouponDto) {
-    return this.couponsService.applyCoupon(
-      dto.code,
-      5000,
-      'TEMP_USER_ID',
-    );
+    return this.couponsService.applyCoupon(dto.code, 5000, 'TEMP_USER_ID');
   }
 
   @Get()

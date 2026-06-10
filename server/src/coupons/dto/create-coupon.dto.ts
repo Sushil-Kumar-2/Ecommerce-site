@@ -66,7 +66,8 @@ export class CreateCouponDto {
   minimumOrderAmount?: number;
 
   @ApiPropertyOptional({
-    description: 'Maximum discount amount cap (useful for percentage discounts)',
+    description:
+      'Maximum discount amount cap (useful for percentage discounts)',
     example: 200,
     minimum: 0,
   })

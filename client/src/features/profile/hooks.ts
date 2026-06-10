@@ -1,11 +1,15 @@
+import { useCallback, useState } from 'react'
 import { toast } from 'sonner'
 
 import { useAuth } from '@/features/auth'
+import type { UploadImageResponse } from '@/features/uploads/upload.types'
+import { env } from '@/lib/env'
+import { store } from '@/store'
 import { getApiErrorMessage } from '@/utils/api-error'
 
 import {
   useChangePasswordMutation,
-  useGetProfileQuery,
+  useGetAccountProfileQuery,
   useUpdateAvatarMutation,
   useUpdateProfileMutation,
 } from './profileApi'
@@ -18,7 +22,7 @@ import type {
 export function useProfile() {
   const { isAuthenticated } = useAuth()
 
-  return useGetProfileQuery(undefined, {
+  return useGetAccountProfileQuery(undefined, {
     skip: !isAuthenticated,
   })
 }
@@ -55,6 +59,43 @@ export function useUpdateAvatar() {
   }
 
   return [update, state] as const
+}
+
+export async function uploadAvatarImage(file: File): Promise<string> {
+  const token = store.getState().auth.token
+  if (!token) throw new Error('Not authenticated')
+
+  const formData = new FormData()
+  formData.append('file', file)
+
+  const response = await fetch(`${env.apiUrl}/uploads/image?folder=avatars`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+    body: formData,
+  })
+
+  if (!response.ok) {
+    throw new Error('Failed to upload avatar')
+  }
+
+  const data = (await response.json()) as UploadImageResponse
+  return data.image.url
+}
+
+export function useUploadAvatar() {
+  const [isUploading, setIsUploading] = useState(false)
+
+  const upload = useCallback(async (file: File) => {
+    setIsUploading(true)
+    try {
+      const url = await uploadAvatarImage(file)
+      return url
+    } finally {
+      setIsUploading(false)
+    }
+  }, [])
+
+  return { upload, isUploading }
 }
 
 export function useChangePassword() {

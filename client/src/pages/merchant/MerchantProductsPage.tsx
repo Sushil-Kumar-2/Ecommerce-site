@@ -1,16 +1,18 @@
 import { Plus } from 'lucide-react'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import { ConfirmDialog } from '@/components/common/ConfirmDialog'
 import { DataTable } from '@/components/common/DataTable'
 import { ErrorState } from '@/components/common/ErrorState'
 import { PageContainer } from '@/components/common/PageContainer'
+import { FilterBar } from '@/components/design-system'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
   useDeleteProduct,
   useMyProducts,
+  useSubmitProduct,
   type MerchantProduct,
 } from '@/features/merchant-products'
 import { formatPrice } from '@/features/products/utils'
@@ -20,7 +22,21 @@ import { ROUTES } from '@/utils/routes'
 
 export function MerchantProductsPage() {
   const { data: products = [], error, isLoading, refetch } = useMyProducts()
+  const [search, setSearch] = useState('')
+  const [statusFilter, setStatusFilter] = useState('all')
   const [deleteProduct, { isLoading: isDeleting }] = useDeleteProduct()
+  const [submitProduct, { isLoading: isSubmitting }] = useSubmitProduct()
+
+  const filteredProducts = useMemo(() => {
+    return products.filter((product) => {
+      const matchesSearch = search
+        ? product.title.toLowerCase().includes(search.toLowerCase())
+        : true
+      const matchesStatus =
+        statusFilter === 'all' ? true : product.status === statusFilter
+      return matchesSearch && matchesStatus
+    })
+  }, [products, search, statusFilter])
   const [productToDelete, setProductToDelete] = useState<MerchantProduct | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
@@ -49,14 +65,29 @@ export function MerchantProductsPage() {
 
   return (
     <PageContainer title="Products" description="Manage your product catalog.">
-      <div className="mb-6 flex justify-end">
-        <Button asChild>
-          <Link to={ROUTES.merchantProductNew}>
-            <Plus />
-            Add product
-          </Link>
-        </Button>
-      </div>
+      <FilterBar
+        search={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Search products..."
+        filters={[
+          { value: 'all', label: 'All' },
+          { value: 'approved', label: 'Approved' },
+          { value: 'pending', label: 'Pending' },
+          { value: 'draft', label: 'Draft' },
+          { value: 'rejected', label: 'Rejected' },
+        ]}
+        activeFilter={statusFilter}
+        onFilterChange={setStatusFilter}
+        actions={
+          <Button asChild>
+            <Link to={ROUTES.merchantProductNew}>
+              <Plus />
+              Add product
+            </Link>
+          </Button>
+        }
+        className="mb-6"
+      />
 
       <DataTable<MerchantProduct>
         columns={[
@@ -76,10 +107,21 @@ export function MerchantProductsPage() {
             key: 'actions',
             header: 'Actions',
             cell: (row) => (
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" asChild>
-                  <Link to={ROUTES.merchantProductEdit(row._id)}>Edit</Link>
-                </Button>
+              <div className="flex flex-wrap gap-2">
+                {row.status !== 'pending' ? (
+                  <Button variant="outline" size="sm" asChild>
+                    <Link to={ROUTES.merchantProductEdit(row._id)}>Edit</Link>
+                  </Button>
+                ) : null}
+                {row.status === 'draft' || row.status === 'rejected' ? (
+                  <Button
+                    size="sm"
+                    disabled={isSubmitting}
+                    onClick={() => void submitProduct(row._id)}
+                  >
+                    Submit for review
+                  </Button>
+                ) : null}
                 <Button
                   variant="destructive"
                   size="sm"
@@ -92,7 +134,7 @@ export function MerchantProductsPage() {
             ),
           },
         ]}
-        data={products}
+        data={filteredProducts}
         isLoading={isLoading}
         emptyTitle="No products yet"
         emptyDescription="Create your first product to start selling."

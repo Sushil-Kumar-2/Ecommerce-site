@@ -1,88 +1,89 @@
+import { Suspense } from 'react'
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 
+import { RouteFallback } from '@/components/common/RouteFallback'
 import { AccountLayout } from '@/components/storefront'
 import { AdminLayout } from '@/layouts/AdminLayout'
 import { AuthLayout } from '@/layouts/AuthLayout'
 import { CustomerLayout } from '@/layouts/CustomerLayout'
 import { MerchantLayout } from '@/layouts/MerchantLayout'
-import { AccountDashboardPage } from '@/pages/account/AccountDashboardPage'
-import { AddressesPage } from '@/pages/account/AddressesPage'
-import { ChangePasswordPage } from '@/pages/account/ChangePasswordPage'
-import { CreateAddressPage } from '@/pages/account/CreateAddressPage'
-import { EditAddressPage } from '@/pages/account/EditAddressPage'
-import { ProfilePage } from '@/pages/account/ProfilePage'
-import { AdminAuditLogsPage } from '@/pages/admin/AdminAuditLogsPage'
-import { AdminCategoriesPage } from '@/pages/admin/AdminCategoriesPage'
-import { AdminCouponsPage } from '@/pages/admin/AdminCouponsPage'
-import { AdminHomePage } from '@/pages/admin/AdminHomePage'
-import { AdminMerchantDetailPage } from '@/pages/admin/AdminMerchantDetailPage'
-import { AdminMerchantsPage } from '@/pages/admin/AdminMerchantsPage'
-import { AdminProductDetailPage } from '@/pages/admin/AdminProductDetailPage'
-import { AdminProductsPage } from '@/pages/admin/AdminProductsPage'
-import { AdminReportsPage } from '@/pages/admin/AdminReportsPage'
-import { AdminUserDetailPage } from '@/pages/admin/AdminUserDetailPage'
-import { AdminUsersPage } from '@/pages/admin/AdminUsersPage'
-import { LoginPage } from '@/pages/auth/LoginPage'
-import { RegisterPage } from '@/pages/auth/RegisterPage'
-import { CartPage } from '@/pages/customer/CartPage'
-import { CheckoutPage } from '@/pages/customer/CheckoutPage'
-import { HomePage } from '@/pages/customer/HomePage'
-import { OrderDetailPage } from '@/pages/customer/OrderDetailPage'
-import { OrdersPage } from '@/pages/customer/OrdersPage'
-import { PaymentFailedPage } from '@/pages/customer/PaymentFailedPage'
-import { PaymentSuccessPage } from '@/pages/customer/PaymentSuccessPage'
-import { ProductDetailPage } from '@/pages/customer/ProductDetailPage'
-import { ProductsPage } from '@/pages/customer/ProductsPage'
-import { WishlistPage } from '@/pages/customer/WishlistPage'
-import { MerchantHomePage } from '@/pages/merchant/MerchantHomePage'
-import { CreateProductPage } from '@/pages/merchant/CreateProductPage'
-import { EditProductPage } from '@/pages/merchant/EditProductPage'
-import { MerchantInventoryPage } from '@/pages/merchant/MerchantInventoryPage'
-import { MerchantOrderDetailPage } from '@/pages/merchant/MerchantOrderDetailPage'
-import { MerchantOrdersPage } from '@/pages/merchant/MerchantOrdersPage'
-import { MerchantProductsPage } from '@/pages/merchant/MerchantProductsPage'
-import { MerchantReviewsPage } from '@/pages/merchant/MerchantReviewsPage'
 import { UserRole } from '@/types/auth.types'
 
 import { GuestRoute } from './guest-route'
+import {
+  AccountDashboardPage,
+  AddressesPage,
+  AdminAuditLogsPage,
+  AdminCategoriesPage,
+  AdminCouponsPage,
+  AdminHomePage,
+  AdminMerchantDetailPage,
+  AdminMerchantsPage,
+  AdminProductDetailPage,
+  AdminProductsPage,
+  AdminReportsPage,
+  AdminUserDetailPage,
+  AdminUsersPage,
+  CartPage,
+  ChangePasswordPage,
+  CheckoutPage,
+  CreateAddressPage,
+  CreateProductPage,
+  EditAddressPage,
+  EditProductPage,
+  HomePage,
+  GoogleCallbackPage,
+  LoginPage,
+  MerchantHomePage,
+  MerchantInventoryPage,
+  MerchantOrderDetailPage,
+  MerchantOrdersPage,
+  MerchantProductsPage,
+  MerchantReviewsPage,
+  OrderDetailPage,
+  OrdersPage,
+  PaymentFailedPage,
+  PaymentSuccessPage,
+  ProductDetailPage,
+  ProductsPage,
+  ProfilePage,
+  RegisterPage,
+  BecomeASellerPage,
+  WishlistPage,
+} from './lazy-pages'
 import { ProtectedRoute } from './protected-route'
+
+function withSuspense(element: React.ReactNode) {
+  return <Suspense fallback={<RouteFallback />}>{element}</Suspense>
+}
 
 export const router = createBrowserRouter([
   {
     path: '/',
     element: <CustomerLayout />,
     children: [
-      {
-        index: true,
-        element: <HomePage />,
-      },
-      {
-        path: 'products',
-        element: <ProductsPage />,
-      },
-      {
-        path: 'products/:id',
-        element: <ProductDetailPage />,
-      },
+      { index: true, element: withSuspense(<HomePage />) },
+      { path: 'products', element: withSuspense(<ProductsPage />) },
+      { path: 'products/:id', element: withSuspense(<ProductDetailPage />) },
       {
         path: 'cart',
         element: <ProtectedRoute />,
-        children: [{ index: true, element: <CartPage /> }],
+        children: [{ index: true, element: withSuspense(<CartPage />) }],
       },
       {
         path: 'checkout',
         element: <ProtectedRoute />,
-        children: [{ index: true, element: <CheckoutPage /> }],
+        children: [{ index: true, element: withSuspense(<CheckoutPage />) }],
       },
       {
         path: 'payment/success',
         element: <ProtectedRoute />,
-        children: [{ index: true, element: <PaymentSuccessPage /> }],
+        children: [{ index: true, element: withSuspense(<PaymentSuccessPage />) }],
       },
       {
         path: 'payment/failed',
         element: <ProtectedRoute />,
-        children: [{ index: true, element: <PaymentFailedPage /> }],
+        children: [{ index: true, element: withSuspense(<PaymentFailedPage />) }],
       },
       {
         element: <ProtectedRoute />,
@@ -90,45 +91,28 @@ export const router = createBrowserRouter([
           {
             element: <AccountLayout />,
             children: [
-              {
-                path: 'account',
-                element: <AccountDashboardPage />,
-              },
-              {
-                path: 'orders',
-                element: <OrdersPage />,
-              },
-              {
-                path: 'orders/:id',
-                element: <OrderDetailPage />,
-              },
-              {
-                path: 'wishlist',
-                element: <WishlistPage />,
-              },
-              {
-                path: 'account/addresses',
-                element: <AddressesPage />,
-              },
-              {
-                path: 'account/addresses/new',
-                element: <CreateAddressPage />,
-              },
-              {
-                path: 'account/addresses/edit/:id',
-                element: <EditAddressPage />,
-              },
-              {
-                path: 'profile',
-                element: <ProfilePage />,
-              },
-              {
-                path: 'profile/change-password',
-                element: <ChangePasswordPage />,
-              },
+              { path: 'account', element: withSuspense(<AccountDashboardPage />) },
+              { path: 'orders', element: withSuspense(<OrdersPage />) },
+              { path: 'orders/:id', element: withSuspense(<OrderDetailPage />) },
+              { path: 'wishlist', element: withSuspense(<WishlistPage />) },
+              { path: 'account/addresses', element: withSuspense(<AddressesPage />) },
+              { path: 'account/addresses/new', element: withSuspense(<CreateAddressPage />) },
+              { path: 'account/addresses/edit/:id', element: withSuspense(<EditAddressPage />) },
+              { path: 'profile', element: withSuspense(<ProfilePage />) },
+              { path: 'profile/change-password', element: withSuspense(<ChangePasswordPage />) },
             ],
           },
         ],
+      },
+    ],
+  },
+  {
+    path: '/become-a-seller',
+    element: <GuestRoute />,
+    children: [
+      {
+        element: <AuthLayout />,
+        children: [{ index: true, element: withSuspense(<BecomeASellerPage />) }],
       },
     ],
   },
@@ -139,14 +123,9 @@ export const router = createBrowserRouter([
       {
         element: <AuthLayout />,
         children: [
-          {
-            path: 'login',
-            element: <LoginPage />,
-          },
-          {
-            path: 'register',
-            element: <RegisterPage />,
-          },
+          { path: 'login', element: withSuspense(<LoginPage />) },
+          { path: 'google/callback', element: withSuspense(<GoogleCallbackPage />) },
+          { path: 'register', element: withSuspense(<RegisterPage />) },
         ],
       },
     ],
@@ -158,38 +137,14 @@ export const router = createBrowserRouter([
       {
         element: <MerchantLayout />,
         children: [
-          {
-            index: true,
-            element: <MerchantHomePage />,
-          },
-          {
-            path: 'products',
-            element: <MerchantProductsPage />,
-          },
-          {
-            path: 'products/new',
-            element: <CreateProductPage />,
-          },
-          {
-            path: 'products/edit/:id',
-            element: <EditProductPage />,
-          },
-          {
-            path: 'orders',
-            element: <MerchantOrdersPage />,
-          },
-          {
-            path: 'orders/:id',
-            element: <MerchantOrderDetailPage />,
-          },
-          {
-            path: 'inventory',
-            element: <MerchantInventoryPage />,
-          },
-          {
-            path: 'reviews',
-            element: <MerchantReviewsPage />,
-          },
+          { index: true, element: withSuspense(<MerchantHomePage />) },
+          { path: 'products', element: withSuspense(<MerchantProductsPage />) },
+          { path: 'products/new', element: withSuspense(<CreateProductPage />) },
+          { path: 'products/edit/:id', element: withSuspense(<EditProductPage />) },
+          { path: 'orders', element: withSuspense(<MerchantOrdersPage />) },
+          { path: 'orders/:id', element: withSuspense(<MerchantOrderDetailPage />) },
+          { path: 'inventory', element: withSuspense(<MerchantInventoryPage />) },
+          { path: 'reviews', element: withSuspense(<MerchantReviewsPage />) },
         ],
       },
     ],
@@ -201,56 +156,20 @@ export const router = createBrowserRouter([
       {
         element: <AdminLayout />,
         children: [
-          {
-            index: true,
-            element: <AdminHomePage />,
-          },
-          {
-            path: 'merchants',
-            element: <AdminMerchantsPage />,
-          },
-          {
-            path: 'merchants/:id',
-            element: <AdminMerchantDetailPage />,
-          },
-          {
-            path: 'products',
-            element: <AdminProductsPage />,
-          },
-          {
-            path: 'products/:id',
-            element: <AdminProductDetailPage />,
-          },
-          {
-            path: 'categories',
-            element: <AdminCategoriesPage />,
-          },
-          {
-            path: 'coupons',
-            element: <AdminCouponsPage />,
-          },
-          {
-            path: 'users',
-            element: <AdminUsersPage />,
-          },
-          {
-            path: 'users/:id',
-            element: <AdminUserDetailPage />,
-          },
-          {
-            path: 'audit-logs',
-            element: <AdminAuditLogsPage />,
-          },
-          {
-            path: 'reports',
-            element: <AdminReportsPage />,
-          },
+          { index: true, element: withSuspense(<AdminHomePage />) },
+          { path: 'merchants', element: withSuspense(<AdminMerchantsPage />) },
+          { path: 'merchants/:id', element: withSuspense(<AdminMerchantDetailPage />) },
+          { path: 'products', element: withSuspense(<AdminProductsPage />) },
+          { path: 'products/:id', element: withSuspense(<AdminProductDetailPage />) },
+          { path: 'categories', element: withSuspense(<AdminCategoriesPage />) },
+          { path: 'coupons', element: withSuspense(<AdminCouponsPage />) },
+          { path: 'users', element: withSuspense(<AdminUsersPage />) },
+          { path: 'users/:id', element: withSuspense(<AdminUserDetailPage />) },
+          { path: 'audit-logs', element: withSuspense(<AdminAuditLogsPage />) },
+          { path: 'reports', element: withSuspense(<AdminReportsPage />) },
         ],
       },
     ],
   },
-  {
-    path: '*',
-    element: <Navigate to="/" replace />,
-  },
+  { path: '*', element: <Navigate to="/" replace /> },
 ])

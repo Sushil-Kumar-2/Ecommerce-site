@@ -14,11 +14,11 @@ const merchantNavItems = [
 
 export function MerchantLayout() {
   return (
-    <div className="flex min-h-screen">
+    <div className="flex h-screen overflow-hidden">
       <AppSidebar title="Merchant" items={merchantNavItems} />
-      <div className="flex min-h-screen flex-1 flex-col">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <Header variant="dashboard" sidebarNav={{ title: 'Merchant', items: merchantNavItems }} />
-        <main className="flex-1 bg-background p-4">
+        <main className="flex-1 overflow-y-auto bg-background">
           <Outlet />
         </main>
       </div>

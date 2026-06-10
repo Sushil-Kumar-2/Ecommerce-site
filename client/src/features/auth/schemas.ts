@@ -11,7 +11,8 @@ export const registerSchema = z
     email: z.email({ message: 'Enter a valid email address' }),
     password: z.string().min(6, { message: 'Password must be at least 6 characters' }),
     confirmPassword: z.string().min(1, { message: 'Please confirm your password' }),
-    role: z.enum(['user', 'merchant']).optional(),
+    phone: z.string().optional(),
+    accountType: z.enum(['customer', 'merchant']).optional(),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: 'Passwords do not match',
@@ -22,6 +23,10 @@ export type LoginFormValues = z.infer<typeof loginSchema>
 export type RegisterFormValues = z.infer<typeof registerSchema>
 
 export function toRegisterRequest(values: RegisterFormValues) {
-  const { confirmPassword: _, ...payload } = values
-  return payload
+  const { confirmPassword: _, accountType: __, ...payload } = values
+  return {
+    ...payload,
+    role: 'user' as const,
+    phone: payload.phone?.trim() || undefined,
+  }
 }

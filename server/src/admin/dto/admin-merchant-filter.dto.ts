@@ -12,7 +12,10 @@ export class AdminMerchantFilterDto {
   @IsString()
   limit?: string;
 
-  @ApiPropertyOptional({ example: 'active', enum: ['active', 'blocked', 'pending'] })
+  @ApiPropertyOptional({
+    example: 'active',
+    enum: ['active', 'blocked', 'pending'],
+  })
   @IsOptional()
   @IsString()
   status?: string;

@@ -10,7 +10,7 @@ const STATUS_ORDER = [
   OrderStatus.DELIVERED,
 ] as const
 
-const STATUS_LABELS: Record<string, string> = {
+const ORDER_STATUS_LABELS: Record<string, string> = {
   pending: 'Order placed',
   confirmed: 'Confirmed',
   processing: 'Processing',
@@ -18,6 +18,19 @@ const STATUS_LABELS: Record<string, string> = {
   out_for_delivery: 'Out for delivery',
   delivered: 'Delivered',
   cancelled: 'Cancelled',
+}
+
+const PAYMENT_STATUS_LABELS: Record<string, string> = {
+  pending: 'Payment pending',
+  paid: 'Paid',
+  failed: 'Payment failed',
+  refunded: 'Refunded',
+}
+
+const PAYMENT_METHOD_LABELS: Record<string, string> = {
+  cod: 'Cash on delivery',
+  razorpay: 'Razorpay',
+  stripe: 'Stripe',
 }
 
 function getTimestampForStatus(order: Order, status: string): string | undefined {
@@ -65,7 +78,7 @@ export function getOrderStatusSteps(order: Order): OrderStatusStep[] {
 
   return STATUS_ORDER.map((status, index) => ({
     key: status,
-    label: STATUS_LABELS[status] ?? status,
+    label: ORDER_STATUS_LABELS[status] ?? status,
     completed: index <= activeIndex,
     current: index === activeIndex,
     timestamp: getTimestampForStatus(order, status),
@@ -89,6 +102,18 @@ export function canRequestReturn(order: Order): boolean {
   )
 }
 
+export function canRetryPayment(order: Order): boolean {
+  return (
+    order.paymentMethod === 'razorpay' &&
+    order.orderStatus === OrderStatus.PENDING &&
+    (order.paymentStatus === 'failed' || order.paymentStatus === 'pending')
+  )
+}
+
+export function getRetryPaymentLabel(order: Order): string {
+  return order.paymentStatus === 'failed' ? 'Retry payment' : 'Pay now'
+}
+
 export function formatOrderDate(date?: string): string {
   if (!date) return '—'
   return new Intl.DateTimeFormat(undefined, {
@@ -98,5 +123,10 @@ export function formatOrderDate(date?: string): string {
 }
 
 export function formatStatusLabel(status: string): string {
-  return STATUS_LABELS[status] ?? status.replace(/_/g, ' ')
+  return (
+    ORDER_STATUS_LABELS[status] ??
+    PAYMENT_STATUS_LABELS[status] ??
+    PAYMENT_METHOD_LABELS[status] ??
+    status.replace(/_/g, ' ')
+  )
 }

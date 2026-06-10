@@ -68,7 +68,7 @@ export function DashboardMobileNav({ title, items }: AppSidebarProps) {
 
 export function AppSidebar({ title, items }: AppSidebarProps) {
   return (
-    <aside className="hidden w-64 shrink-0 border-r bg-muted/20 md:block">
+    <aside className="hidden h-screen w-64 shrink-0 overflow-y-auto border-r bg-muted/20 md:block">
       <div className="flex h-full flex-col">
         <div className="border-b px-4 py-4">
           <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">

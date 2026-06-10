@@ -17,7 +17,10 @@ export class AdminUserFilterDto {
   @IsString()
   role?: string;
 
-  @ApiPropertyOptional({ example: 'active', enum: ['active', 'blocked', 'pending'] })
+  @ApiPropertyOptional({
+    example: 'active',
+    enum: ['active', 'blocked', 'pending'],
+  })
   @IsOptional()
   @IsString()
   status?: string;

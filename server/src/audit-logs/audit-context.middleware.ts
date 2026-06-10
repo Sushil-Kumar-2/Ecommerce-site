@@ -9,7 +9,9 @@ export class AuditContextMiddleware implements NestMiddleware {
   use(req: Request, res: Response, next: NextFunction): void {
     const forwarded = req.headers['x-forwarded-for'];
     const ipAddress =
-      (typeof forwarded === 'string' ? forwarded.split(',')[0].trim() : undefined) ??
+      (typeof forwarded === 'string'
+        ? forwarded.split(',')[0].trim()
+        : undefined) ??
       req.ip ??
       req.socket.remoteAddress;
 

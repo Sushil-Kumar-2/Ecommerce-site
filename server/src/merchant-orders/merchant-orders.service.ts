@@ -169,7 +169,10 @@ export class MerchantOrdersService {
     return summary;
   }
 
-  async accept(merchantId: string, orderId: string): Promise<MerchantOrderView> {
+  async accept(
+    merchantId: string,
+    orderId: string,
+  ): Promise<MerchantOrderView> {
     const order = await this.findMerchantOrderOrThrow(merchantId, orderId);
     this.assertOrderActionable(order);
 
@@ -459,7 +462,8 @@ export class MerchantOrdersService {
       items: merchantItems,
       merchantFulfillment: fulfillment,
       merchantSubtotal,
-      createdAt: (order as Order & { createdAt?: Date }).createdAt ?? new Date(),
+      createdAt:
+        (order as Order & { createdAt?: Date }).createdAt ?? new Date(),
     };
   }
 }

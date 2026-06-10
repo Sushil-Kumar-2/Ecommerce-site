@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument } from 'mongoose';
+import { HydratedDocument, Types } from 'mongoose';
 
 export type CategoryDocument = HydratedDocument<Category>;
 
@@ -26,6 +26,18 @@ export class Category {
 
   @Prop()
   image: string;
+
+  @Prop({
+    type: Types.ObjectId,
+    ref: 'Category',
+  })
+  parentCategory?: Types.ObjectId;
+
+  @Prop({
+    enum: ['active', 'inactive'],
+    default: 'active',
+  })
+  status: string;
 
   @Prop({
     default: true,

@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom'
 
-import { TrustBadges } from './TrustBadges'
 import { ROUTES } from '@/utils/routes'
 
 const footerColumns = [
@@ -30,16 +29,16 @@ const footerColumns = [
       { label: 'Checkout', to: ROUTES.checkout },
     ],
   },
+  {
+    title: 'Sell',
+    links: [{ label: 'Sell on ShopKart', to: ROUTES.becomeASeller }],
+  },
 ] as const
 
 export function StorefrontFooter() {
   return (
     <footer className="mt-auto border-t bg-muted/30">
-      <div className="border-b py-6">
-        <TrustBadges />
-      </div>
-
-      <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 sm:grid-cols-2 md:grid-cols-4">
+      <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 sm:grid-cols-2 md:grid-cols-5">
         <div>
           <Link to={ROUTES.home} className="font-heading text-lg font-semibold text-brand-primary">
             ShopKart

@@ -46,7 +46,9 @@ export class CouponsService {
     return saved;
   }
 
-  async findAll(filter: { page?: string; limit?: string; isActive?: string } = {}) {
+  async findAll(
+    filter: { page?: string; limit?: string; isActive?: string } = {},
+  ) {
     const page = Number(filter.page ?? '1');
     const limit = Number(filter.limit ?? '20');
     const skip = (page - 1) * limit;

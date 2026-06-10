@@ -63,6 +63,8 @@ export interface Order {
   paymentMethod: PaymentMethod
   paymentStatus: PaymentStatus
   orderStatus: OrderStatus
+  paymentFailureReason?: string
+  paymentFailedAt?: string
   razorpayOrderId?: string
   razorpayPaymentId?: string
   paidAt?: string

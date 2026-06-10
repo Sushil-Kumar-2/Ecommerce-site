@@ -57,6 +57,22 @@ export const adminMerchantsApi = baseApi.injectEndpoints({
         'AuditLog',
       ],
     }),
+    rejectMerchant: builder.mutation<
+      MerchantUser,
+      { id: string; reason?: string }
+    >({
+      query: ({ id, reason }) => ({
+        url: `/admin/merchants/${id}/reject`,
+        method: 'PATCH',
+        body: reason ? { reason } : {},
+      }),
+      invalidatesTags: (_result, _error, { id }) => [
+        { type: 'Merchant', id },
+        { type: 'Merchant', id: 'LIST' },
+        'Dashboard',
+        'AuditLog',
+      ],
+    }),
   }),
 })
 
@@ -66,4 +82,5 @@ export const {
   useGetAdminMerchantProductsQuery,
   useActivateMerchantMutation,
   useBlockMerchantMutation,
+  useRejectMerchantMutation,
 } = adminMerchantsApi

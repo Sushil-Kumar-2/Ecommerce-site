@@ -1,9 +1,13 @@
-import { Injectable } from '@nestjs/common';
-import { UpdatePaymentDto } from './dto/update-payment.dto';
+import {
+  Inject,
+  Injectable,
+  NotFoundException,
+  forwardRef,
+} from '@nestjs/common';
 import Razorpay from 'razorpay';
 import { ConfigService } from '@nestjs/config';
 import { InjectModel } from '@nestjs/mongoose';
-import { Order } from '../orders/schemas/order.schema';
+import { Order, OrderDocument } from '../orders/schemas/order.schema';
 import { Model } from 'mongoose';
 import * as crypto from 'crypto';
 import { BadRequestException } from '@nestjs/common';
@@ -15,37 +19,71 @@ import {
 } from '../orders/order.enums';
 import { OrdersService } from '../orders/orders.service';
 import { NotificationEventsService } from '../notifications/notification-events.service';
+import { Payment, PaymentDocument } from './schemas/payment.schema';
 
 @Injectable()
 export class PaymentsService {
   private razorpay: Razorpay;
+
   constructor(
     private readonly configService: ConfigService,
+    @Inject(forwardRef(() => OrdersService))
     private readonly ordersService: OrdersService,
     private readonly notificationEvents: NotificationEventsService,
     @InjectModel(Order.name)
     private readonly orderModel: Model<Order>,
+    @InjectModel(Payment.name)
+    private readonly paymentModel: Model<PaymentDocument>,
   ) {
     this.razorpay = new Razorpay({
       key_id: this.configService.get<string>('RAZORPAY_KEY_ID')!,
       key_secret: this.configService.get<string>('RAZORPAY_KEY_SECRET')!,
     });
   }
+
+  async createPaymentRecord(
+    order: OrderDocument,
+    status: PaymentStatus = PaymentStatus.PENDING,
+  ) {
+    return this.paymentModel.create({
+      orderId: order._id.toString(),
+      userId: order.userId,
+      amount: order.totalAmount,
+      method: order.paymentMethod,
+      status,
+      gatewayOrderId: order.razorpayOrderId,
+      gatewayPaymentId: order.paymentId,
+      paidAt: order.paidAt,
+    });
+  }
+
   async createRazorpayOrder(orderId: string) {
+    await this.ordersService.prepareOrderForPaymentRetry(orderId);
+
     const order = await this.orderModel.findById(orderId);
 
     if (!order) {
-      throw new Error('Order not found');
+      throw new NotFoundException('Order not found');
     }
 
     const razorpayOrder = await this.razorpay.orders.create({
-      amount: order.totalAmount * 100, // paise
+      amount: order.totalAmount * 100,
       currency: 'INR',
       receipt: order.orderNumber,
     });
     order.razorpayOrderId = razorpayOrder.id;
 
     await order.save();
+
+    await this.paymentModel.findOneAndUpdate(
+      { orderId: order._id.toString() },
+      {
+        status: PaymentStatus.PENDING,
+        gatewayOrderId: razorpayOrder.id,
+        gatewayPaymentId: undefined,
+        paidAt: undefined,
+      },
+    );
 
     return {
       key: this.configService.get<string>('RAZORPAY_KEY_ID')!,
@@ -113,6 +151,16 @@ export class PaymentsService {
 
     await order.save();
 
+    await this.paymentModel.findOneAndUpdate(
+      { orderId: order._id.toString() },
+      {
+        status: PaymentStatus.PAID,
+        gatewayPaymentId: dto.razorpayPaymentId,
+        paidAt: order.paidAt,
+      },
+      { upsert: true, new: true },
+    );
+
     await this.notificationEvents.notifyPaymentSuccess(
       order.userId,
       order._id.toString(),
@@ -128,6 +176,8 @@ export class PaymentsService {
       );
     }
 
+    await this.ordersService.clearUserCartAfterPayment(order.userId);
+
     return {
       success: true,
       message: 'Payment verified successfully',
@@ -136,6 +186,11 @@ export class PaymentsService {
   }
 
   async markPaymentFailed(orderId: string) {
+    await this.paymentModel.findOneAndUpdate(
+      { orderId },
+      { status: PaymentStatus.FAILED },
+    );
+
     return this.ordersService.handlePaymentFailure(
       orderId,
       'Payment gateway failed',
@@ -143,14 +198,22 @@ export class PaymentsService {
   }
 
   findAll() {
-    return `This action returns all payments`;
+    return this.paymentModel.find().sort({ createdAt: -1 });
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} payment`;
+  async findOne(id: string) {
+    const payment = await this.paymentModel.findById(id);
+
+    if (!payment) {
+      throw new NotFoundException('Payment not found');
+    }
+
+    return payment;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} payment`;
+  async remove(id: string) {
+    const payment = await this.findOne(id);
+    await payment.deleteOne();
+    return { success: true };
   }
 }

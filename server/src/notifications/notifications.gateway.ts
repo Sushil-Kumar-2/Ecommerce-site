@@ -1,7 +1,4 @@
-import {
-  Logger,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Logger, UnauthorizedException } from '@nestjs/common';
 import {
   ConnectedSocket,
   OnGatewayConnection,

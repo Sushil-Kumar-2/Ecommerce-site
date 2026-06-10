@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
+  IsMongoId,
   IsNotEmpty,
   IsString,
   IsNumber,
@@ -38,8 +39,7 @@ export class CreateProductDto {
     description: 'MongoDB ObjectId of the product category',
     example: '507f1f77bcf86cd799439011',
   })
-  @IsString()
-  @IsNotEmpty()
+  @IsMongoId()
   categoryId: string;
 
   @ApiProperty({

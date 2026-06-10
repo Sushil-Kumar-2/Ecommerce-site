@@ -2,7 +2,8 @@ export const SEED_PRODUCT_REPORTS = [
   {
     productSlug: 'demo-budget-phone',
     reporterKey: 'customer2' as const,
-    reason: 'Product images do not match the actual item received in a similar listing.',
+    reason:
+      'Product images do not match the actual item received in a similar listing.',
     status: 'pending' as const,
   },
   {

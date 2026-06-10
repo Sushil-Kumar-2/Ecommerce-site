@@ -11,6 +11,7 @@ import {
   useGetMerchantProductByIdQuery,
   useGetMyProductsQuery,
   useUpdateProductMutation,
+  useSubmitProductMutation,
 } from './merchantProductsApi'
 import type {
   CreateMerchantProductRequest,
@@ -44,7 +45,7 @@ export function useCreateProduct() {
   const create = async (payload: CreateMerchantProductRequest) => {
     try {
       const result = await createProduct(payload).unwrap()
-      toast.success('Product created')
+      toast.success('Product saved as draft. Submit for admin review when ready.')
       return result
     } catch (error) {
       toast.error(getApiErrorMessage(error, 'Failed to create product.'))
@@ -86,6 +87,23 @@ export function useDeleteProduct() {
   }
 
   return [remove, state] as const
+}
+
+export function useSubmitProduct() {
+  const [submit, state] = useSubmitProductMutation()
+
+  const action = async (id: string) => {
+    try {
+      const result = await submit(id).unwrap()
+      toast.success('Product submitted for review')
+      return result
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, 'Failed to submit product.'))
+      throw error
+    }
+  }
+
+  return [action, state] as const
 }
 
 export function useUpdateStock() {

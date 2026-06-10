@@ -10,7 +10,7 @@ import type {
 
 export const profileApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    getProfile: builder.query<Profile, void>({
+    getAccountProfile: builder.query<Profile, void>({
       query: () => '/profile',
       providesTags: ['Profile'],
     }),
@@ -41,7 +41,7 @@ export const profileApi = baseApi.injectEndpoints({
 })
 
 export const {
-  useGetProfileQuery,
+  useGetAccountProfileQuery,
   useUpdateProfileMutation,
   useUpdateAvatarMutation,
   useChangePasswordMutation,

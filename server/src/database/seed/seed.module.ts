@@ -3,15 +3,24 @@ import { ConfigModule } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 
 import { Address, AddressSchema } from '../../addresses/schemas/address.schema';
-import { AuditLog, AuditLogSchema } from '../../audit-logs/schemas/audit-log.schema';
+import {
+  AuditLog,
+  AuditLogSchema,
+} from '../../audit-logs/schemas/audit-log.schema';
 import { Cart, CartSchema } from '../../cart/schemas/cart.schema';
-import { Category, CategorySchema } from '../../categories/schemas/category.schema';
+import {
+  Category,
+  CategorySchema,
+} from '../../categories/schemas/category.schema';
 import { Coupon, CouponSchema } from '../../coupons/schemas/coupon.schema';
 import {
   InventoryTransaction,
   InventoryTransactionSchema,
 } from '../../inventory/schemas/inventory-transaction.schema';
-import { Notification, NotificationSchema } from '../../notifications/schemas/notification.schema';
+import {
+  Notification,
+  NotificationSchema,
+} from '../../notifications/schemas/notification.schema';
 import {
   ProductReport,
   ProductReportSchema,
@@ -22,10 +31,16 @@ import {
   RecentlyViewed,
   RecentlyViewedSchema,
 } from '../../recently-viewed/schemas/recently-viewed.schema';
-import { ReturnRequest, ReturnRequestSchema } from '../../returns/schemas/return-request.schema';
+import {
+  ReturnRequest,
+  ReturnRequestSchema,
+} from '../../returns/schemas/return-request.schema';
 import { Review, ReviewSchema } from '../../reviews/schemas/review.schema';
 import { User, UserSchema } from '../../users/schemas/user.schema';
-import { Wishlist, WishlistSchema } from '../../wishlists/schemas/wishlist.schema';
+import {
+  Wishlist,
+  WishlistSchema,
+} from '../../wishlists/schemas/wishlist.schema';
 
 import { SeedService } from './seed.service';
 

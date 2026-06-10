@@ -1,5 +1,13 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsNotEmpty, IsOptional, IsString, IsUrl } from 'class-validator';
+import {
+  IsBoolean,
+  IsIn,
+  IsMongoId,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  IsUrl,
+} from 'class-validator';
 
 export class CreateCategoryDto {
   @ApiProperty({
@@ -34,6 +42,21 @@ export class CreateCategoryDto {
   @IsString()
   @IsUrl({}, { message: 'image must be a valid URL' })
   image?: string;
+
+  @ApiPropertyOptional({
+    description: 'Parent category ObjectId for nested categories',
+  })
+  @IsOptional()
+  @IsMongoId()
+  parentCategory?: string;
+
+  @ApiPropertyOptional({
+    enum: ['active', 'inactive'],
+    default: 'active',
+  })
+  @IsOptional()
+  @IsIn(['active', 'inactive'])
+  status?: 'active' | 'inactive';
 
   @ApiPropertyOptional({
     description: 'Whether the category is visible and selectable',

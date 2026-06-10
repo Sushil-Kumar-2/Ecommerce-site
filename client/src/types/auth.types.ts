@@ -36,6 +36,26 @@ export interface RegisterResponse {
   role: UserRole
 }
 
+export interface RegisterMerchantRequest {
+  name: string
+  email: string
+  password: string
+  phone: string
+  shopName: string
+  shopDescription: string
+  businessAddress: string
+  gstNumber?: string
+}
+
+export interface RegisterMerchantResponse {
+  _id: string
+  name: string
+  email: string
+  role: UserRole
+  status: string
+  shopName: string
+}
+
 export interface JwtPayload {
   sub: string
   email: string

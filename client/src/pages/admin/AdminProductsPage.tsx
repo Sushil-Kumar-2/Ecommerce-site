@@ -4,6 +4,8 @@ import { useState } from 'react'
 import { DataTable } from '@/components/common/DataTable'
 import { ErrorState } from '@/components/common/ErrorState'
 import { PageContainer } from '@/components/common/PageContainer'
+import { FilterBar } from '@/components/design-system'
+import { StringTablePagination } from '@/components/common/TablePagination'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -25,10 +27,12 @@ const STATUS_TABS: { label: string; value: ProductTab }[] = [
   { label: 'Featured', value: 'featured' },
 ]
 
-function getFilters(tab: ProductTab, page: string): AdminProductFilters {
-  if (tab === 'all') return { page, limit: '20' }
-  if (tab === 'featured') return { page, limit: '20', featured: true }
-  return { page, limit: '20', status: tab }
+function getFilters(tab: ProductTab, page: string, search: string): AdminProductFilters {
+  const base: AdminProductFilters = { page, limit: '20' }
+  if (search.trim()) base.search = search.trim()
+  if (tab === 'all') return base
+  if (tab === 'featured') return { ...base, featured: true }
+  return { ...base, status: tab }
 }
 
 function getMerchantName(product: AdminProduct): string {
@@ -41,9 +45,10 @@ function getMerchantName(product: AdminProduct): string {
 export function AdminProductsPage() {
   const [activeTab, setActiveTab] = useState<ProductTab>('all')
   const [page, setPage] = useState('1')
+  const [search, setSearch] = useState('')
 
   const { data, error, isLoading, refetch } = useAdminProducts(
-    getFilters(activeTab, page),
+    getFilters(activeTab, page, search),
   )
 
   if (error) {
@@ -65,6 +70,16 @@ export function AdminProductsPage() {
       title="Products"
       description="Review, approve, and feature marketplace products."
     >
+      <FilterBar
+        search={search}
+        onSearchChange={(value) => {
+          setSearch(value)
+          setPage('1')
+        }}
+        searchPlaceholder="Search products..."
+        className="mb-4"
+      />
+
       <div className="mb-4 flex flex-wrap gap-2">
         {STATUS_TABS.map((tab) => (
           <Button
@@ -132,29 +147,11 @@ export function AdminProductsPage() {
         getRowKey={(row) => row._id}
       />
 
-      {totalPages > 1 ? (
-        <div className="mt-4 flex justify-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={page === '1'}
-            onClick={() => setPage(String(Number(page) - 1))}
-          >
-            Previous
-          </Button>
-          <span className="flex items-center text-sm text-muted-foreground">
-            Page {page} of {totalPages}
-          </span>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={Number(page) >= totalPages}
-            onClick={() => setPage(String(Number(page) + 1))}
-          >
-            Next
-          </Button>
-        </div>
-      ) : null}
+      <StringTablePagination
+        page={page}
+        totalPages={totalPages}
+        onPageChange={setPage}
+      />
     </PageContainer>
   )
 }

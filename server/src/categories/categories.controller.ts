@@ -6,6 +6,7 @@ import {
   Delete,
   Param,
   Body,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -54,10 +55,12 @@ export class CategoriesController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'List all categories' })
+  @ApiOperation({
+    summary: 'List categories (storefront roots or all for admin)',
+  })
   @ApiResponse({ status: 200, description: 'Category list' })
-  findAll() {
-    return this.categoriesService.findAll();
+  findAll(@Query('includeAll') includeAll?: string) {
+    return this.categoriesService.findAll(includeAll === 'true');
   }
 
   @Get(':id')

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 
 import { useAuth } from '@/features/auth'
 import { useGetMyProductsQuery } from '@/features/merchant-products/merchantProductsApi'
@@ -7,10 +7,37 @@ import { env } from '@/lib/env'
 
 import type { MerchantReviewItem, ProductReview } from './merchant-review.types'
 
+const BATCH_SIZE = 5
+
 async function fetchProductReviews(productId: string): Promise<ProductReview[]> {
   const response = await fetch(`${env.apiUrl}/reviews/product/${productId}`)
   if (!response.ok) return []
   return response.json() as Promise<ProductReview[]>
+}
+
+async function fetchReviewsInBatches(
+  productIds: Array<{ id: string; title: string }>,
+): Promise<MerchantReviewItem[]> {
+  const allReviews: MerchantReviewItem[] = []
+
+  for (let index = 0; index < productIds.length; index += BATCH_SIZE) {
+    const batch = productIds.slice(index, index + BATCH_SIZE)
+    const batchResults = await Promise.all(
+      batch.map(async (product) => {
+        const productReviews = await fetchProductReviews(product.id)
+        return productReviews.map((review) => ({
+          ...review,
+          productTitle: product.title,
+        }))
+      }),
+    )
+    allReviews.push(...batchResults.flat())
+  }
+
+  return allReviews.sort(
+    (a, b) =>
+      new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime(),
+  )
 }
 
 export function useMerchantReviews() {
@@ -26,8 +53,13 @@ export function useMerchantReviews() {
   const [error, setError] = useState<unknown>(null)
   const [refreshKey, setRefreshKey] = useState(0)
 
+  const productIds = useMemo(
+    () => products.map((product) => ({ id: product._id, title: product.title })),
+    [products],
+  )
+
   useEffect(() => {
-    if (!isMerchant || products.length === 0) {
+    if (!isMerchant || productIds.length === 0) {
       setReviews([])
       return
     }
@@ -39,26 +71,8 @@ export function useMerchantReviews() {
       setError(null)
 
       try {
-        const results = await Promise.all(
-          products.map(async (product) => {
-            const productReviews = await fetchProductReviews(product._id)
-            return productReviews.map((review) => ({
-              ...review,
-              productTitle: product.title,
-            }))
-          }),
-        )
-
-        if (!cancelled) {
-          const merged = results
-            .flat()
-            .sort(
-              (a, b) =>
-                new Date(b.createdAt ?? 0).getTime() -
-                new Date(a.createdAt ?? 0).getTime(),
-            )
-          setReviews(merged)
-        }
+        const merged = await fetchReviewsInBatches(productIds)
+        if (!cancelled) setReviews(merged)
       } catch (err) {
         if (!cancelled) setError(err)
       } finally {
@@ -71,7 +85,7 @@ export function useMerchantReviews() {
     return () => {
       cancelled = true
     }
-  }, [isMerchant, products, refreshKey])
+  }, [isMerchant, productIds, refreshKey])
 
   const refetch = () => {
     setRefreshKey((value) => value + 1)

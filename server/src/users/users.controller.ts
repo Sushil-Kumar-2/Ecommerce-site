@@ -17,6 +17,7 @@ import {
 } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
+import { CreateMerchantDto } from './dto/create-merchant.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import {
   ApiBadRequestResponse,
@@ -35,8 +36,16 @@ import { SWAGGER_BEARER_AUTH } from '../common/swagger/swagger.constants';
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
+  @Post('register-merchant')
+  @ApiOperation({ summary: 'Register a new merchant (pending approval)' })
+  @ApiResponse({ status: 201, description: 'Merchant application submitted' })
+  @ApiResponse(ApiBadRequestResponse)
+  registerMerchant(@Body() createMerchantDto: CreateMerchantDto) {
+    return this.usersService.createMerchant(createMerchantDto);
+  }
+
   @Post()
-  @ApiOperation({ summary: 'Register a new user or merchant' })
+  @ApiOperation({ summary: 'Register a new customer' })
   @ApiResponse({ status: 201, description: 'User created successfully' })
   @ApiResponse(ApiBadRequestResponse)
   create(@Body() createUserDto: CreateUserDto) {
@@ -47,7 +56,9 @@ export class UsersController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN)
   @ApiBearerAuth(SWAGGER_BEARER_AUTH)
-  @ApiOperation({ summary: 'List all users (admin only — use /admin/users instead)' })
+  @ApiOperation({
+    summary: 'List all users (admin only — use /admin/users instead)',
+  })
   @ApiResponse({ status: 200, description: 'Array of users' })
   @ApiResponse(ApiUnauthorizedResponse)
   @ApiResponse(ApiForbiddenResponse)

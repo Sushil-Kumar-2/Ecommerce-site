@@ -2,12 +2,15 @@ import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import cookieParser from 'cookie-parser';
 import { join } from 'path';
 import { AppModule } from './app.module';
 import { SWAGGER_BEARER_AUTH } from './common/swagger/swagger.constants';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
+
+  app.use(cookieParser());
 
   app.useStaticAssets(join(process.cwd(), 'uploads'), {
     prefix: '/static/uploads/',

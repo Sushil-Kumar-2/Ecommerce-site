@@ -1,9 +1,9 @@
-import { Star } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
 import { DataTable } from '@/components/common/DataTable'
 import { ErrorState } from '@/components/common/ErrorState'
 import { PageContainer } from '@/components/common/PageContainer'
+import { RatingStars } from '@/components/design-system'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -12,25 +12,6 @@ import {
 } from '@/features/merchant-reviews'
 import { formatOrderDate } from '@/features/orders'
 import { getApiErrorMessage } from '@/utils/api-error'
-import { cn } from '@/lib/utils'
-
-function RatingStars({ rating }: { rating: number }) {
-  return (
-    <div className="flex items-center gap-0.5">
-      {Array.from({ length: 5 }).map((_, index) => (
-        <Star
-          key={index}
-          className={cn(
-            'size-4',
-            index < rating
-              ? 'fill-amber-400 text-amber-400'
-              : 'text-muted-foreground',
-          )}
-        />
-      ))}
-    </div>
-  )
-}
 
 export function MerchantReviewsPage() {
   const { reviews, isLoading, error, refetch } = useMerchantReviews()

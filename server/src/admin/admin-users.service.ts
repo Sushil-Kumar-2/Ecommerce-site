@@ -8,8 +8,7 @@ import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { AuditAction, AuditResource } from '../audit-logs/audit-log.enums';
 import { AdminUserFilterDto } from './dto/admin-user-filter.dto';
 
-const USER_SELECT =
-  '-password name email phone role status avatar shopLogo shopName shopDescription gstNumber businessAddress emailVerified createdAt updatedAt';
+const USER_SELECT = '-password';
 
 @Injectable()
 export class AdminUsersService {

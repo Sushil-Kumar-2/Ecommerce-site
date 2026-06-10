@@ -33,7 +33,10 @@ export class ReturnsService {
     private readonly auditLogsService: AuditLogsService,
   ) {}
 
-  async create(userId: string, dto: CreateReturnDto): Promise<ReturnRequestDocument> {
+  async create(
+    userId: string,
+    dto: CreateReturnDto,
+  ): Promise<ReturnRequestDocument> {
     if (!isValidObjectId(dto.orderId) || !isValidObjectId(dto.productId)) {
       throw new NotFoundException('Order or product not found');
     }
@@ -41,11 +44,15 @@ export class ReturnsService {
     const order = await this.ordersService.findOne(dto.orderId);
 
     if (order.userId !== userId) {
-      throw new ForbiddenException('You can only request returns for your own orders');
+      throw new ForbiddenException(
+        'You can only request returns for your own orders',
+      );
     }
 
     if (order.orderStatus !== OrderStatus.DELIVERED) {
-      throw new BadRequestException('Returns are allowed only for delivered orders');
+      throw new BadRequestException(
+        'Returns are allowed only for delivered orders',
+      );
     }
 
     if (order.paymentStatus !== PaymentStatus.PAID) {
@@ -175,7 +182,10 @@ export class ReturnsService {
     return returnRequest;
   }
 
-  async processRefund(id: string, actor?: JwtUser): Promise<ReturnRequestDocument> {
+  async processRefund(
+    id: string,
+    actor?: JwtUser,
+  ): Promise<ReturnRequestDocument> {
     const returnRequest = await this.findReturnOrThrow(id);
 
     if (returnRequest.status !== ReturnStatus.APPROVED) {

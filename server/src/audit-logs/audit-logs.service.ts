@@ -23,9 +23,10 @@ export class AuditLogsService {
       const requestMeta = this.auditContextService.getRequestMeta();
 
       const log = await this.auditLogModel.create({
-        userId: input.userId && isValidObjectId(input.userId)
-          ? new Types.ObjectId(input.userId)
-          : undefined,
+        userId:
+          input.userId && isValidObjectId(input.userId)
+            ? new Types.ObjectId(input.userId)
+            : undefined,
         role: input.role,
         action: input.action,
         resource: input.resource,
@@ -42,7 +43,9 @@ export class AuditLogsService {
     }
   }
 
-  async getLogs(filter: AuditLogFilterDto = {}): Promise<PaginatedAuditLogsResponse> {
+  async getLogs(
+    filter: AuditLogFilterDto = {},
+  ): Promise<PaginatedAuditLogsResponse> {
     const page = Number(filter.page ?? '1');
     const limit = Number(filter.limit ?? '20');
     const skip = (page - 1) * limit;

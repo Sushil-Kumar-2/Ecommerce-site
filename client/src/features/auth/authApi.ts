@@ -24,12 +24,31 @@ export const authApi = baseApi.injectEndpoints({
         body,
       }),
     }),
-    getProfile: builder.query<AuthUser, void>({
+    getAuthSession: builder.query<AuthUser, void>({
       query: () => '/auth/profile',
       providesTags: ['Auth'],
+    }),
+    logout: builder.mutation<{ success: boolean }, void>({
+      query: () => ({
+        url: '/auth/logout',
+        method: 'POST',
+      }),
+      invalidatesTags: ['Auth'],
+    }),
+    refreshSession: builder.mutation<LoginResponse, void>({
+      query: () => ({
+        url: '/auth/refresh',
+        method: 'POST',
+      }),
+      invalidatesTags: ['Auth'],
     }),
   }),
 })
 
-export const { useLoginMutation, useRegisterMutation, useGetProfileQuery } =
-  authApi
+export const {
+  useLoginMutation,
+  useRegisterMutation,
+  useGetAuthSessionQuery,
+  useLogoutMutation,
+  useRefreshSessionMutation,
+} = authApi

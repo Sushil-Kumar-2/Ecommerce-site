@@ -9,6 +9,7 @@ import {
   useGetAdminMerchantByIdQuery,
   useGetAdminMerchantProductsQuery,
   useGetAdminMerchantsQuery,
+  useRejectMerchantMutation,
 } from './adminMerchantsApi'
 import type { MerchantFilters } from './admin-merchant.types'
 
@@ -56,6 +57,23 @@ export function useBlockMerchant() {
       return result
     } catch (error) {
       toast.error(getApiErrorMessage(error, 'Failed to block merchant.'))
+      throw error
+    }
+  }
+
+  return [action, state] as const
+}
+
+export function useRejectMerchant() {
+  const [reject, state] = useRejectMerchantMutation()
+
+  const action = async (id: string, reason?: string) => {
+    try {
+      const result = await reject({ id, reason }).unwrap()
+      toast.success('Merchant application rejected')
+      return result
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, 'Failed to reject merchant.'))
       throw error
     }
   }

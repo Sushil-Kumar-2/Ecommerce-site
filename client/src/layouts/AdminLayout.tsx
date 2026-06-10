@@ -2,6 +2,7 @@ import { Outlet } from 'react-router-dom'
 
 import { AppSidebar } from '@/components/common/AppSidebar'
 import { Header } from '@/components/common/Header'
+import { AdminCommandPalette } from '@/components/dashboard/AdminCommandPalette'
 import { ROUTES } from '@/utils/routes'
 
 const adminNavItems = [
@@ -17,13 +18,14 @@ const adminNavItems = [
 
 export function AdminLayout() {
   return (
-    <div className="flex min-h-screen">
+    <div className="flex h-screen overflow-hidden">
       <AppSidebar title="Admin" items={adminNavItems} />
-      <div className="flex min-h-screen flex-1 flex-col">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <Header variant="dashboard" sidebarNav={{ title: 'Admin', items: adminNavItems }} />
-        <main className="flex-1 bg-background p-4">
+        <main className="flex-1 overflow-y-auto bg-background">
           <Outlet />
         </main>
+        <AdminCommandPalette />
       </div>
     </div>
   )

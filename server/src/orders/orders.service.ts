@@ -1,8 +1,10 @@
 import {
   BadRequestException,
   ForbiddenException,
+  Inject,
   Injectable,
   NotFoundException,
+  forwardRef,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
@@ -30,6 +32,7 @@ import { InventoryTransactionType } from '../inventory/inventory.enums';
 import { MerchantFulfillmentStatus } from './merchant-fulfillment.enums';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { AuditAction, AuditResource } from '../audit-logs/audit-log.enums';
+import { PaymentsService } from '../payments/payments.service';
 
 @Injectable()
 export class OrdersService {
@@ -48,6 +51,8 @@ export class OrdersService {
     private readonly couponsService: CouponsService,
     private readonly notificationEvents: NotificationEventsService,
     private readonly auditLogsService: AuditLogsService,
+    @Inject(forwardRef(() => PaymentsService))
+    private readonly paymentsService: PaymentsService,
   ) {}
 
   async create(createOrderDto: CreateOrderDto, userId: string) {
@@ -135,8 +140,11 @@ export class OrdersService {
       totalAmount,
       couponCode,
       paymentMethod: createOrderDto.paymentMethod,
-      paymentStatus: 'pending',
-      orderStatus: 'pending',
+      paymentStatus: PaymentStatus.PENDING,
+      orderStatus:
+        createOrderDto.paymentMethod === PaymentMethod.COD
+          ? OrderStatus.CONFIRMED
+          : OrderStatus.PENDING,
       merchantIds,
       merchantFulfillments: merchantIds.map((merchantId) => ({
         merchantId,
@@ -149,6 +157,8 @@ export class OrdersService {
       const newOrder = new this.orderModel(orderData);
       await newOrder.save();
 
+      await this.paymentsService.createPaymentRecord(newOrder);
+
       if (couponCode) {
         await this.couponsService.markCouponAsUsed(couponCode, userId);
         await this.notificationEvents.notifyCouponApplied(
@@ -158,7 +168,10 @@ export class OrdersService {
         );
       }
 
-      await this.cartService.clearCart(userId);
+      // COD is confirmed immediately; online payments clear cart only after success.
+      if (createOrderDto.paymentMethod === PaymentMethod.COD) {
+        await this.cartService.clearCart(userId);
+      }
 
       await this.notificationEvents.notifyOrderCreated(
         userId,
@@ -647,6 +660,10 @@ export class OrdersService {
 
     await order.save();
 
+    if (order.paymentMethod === PaymentMethod.RAZORPAY) {
+      await this.cartService.restoreCartFromOrder(order.userId, order.items);
+    }
+
     await this.notificationEvents.notifyPaymentFailed(
       order.userId,
       order._id.toString(),
@@ -671,5 +688,64 @@ export class OrdersService {
 
   async findOrderById(orderId: string) {
     return await this.orderModel.findById(orderId);
+  }
+
+  async clearUserCartAfterPayment(userId: string) {
+    await this.cartService.clearCart(userId);
+  }
+
+  async prepareOrderForPaymentRetry(orderId: string) {
+    const order = await this.orderModel.findById(orderId);
+
+    if (!order) {
+      throw new NotFoundException('Order not found');
+    }
+
+    if (order.paymentMethod !== PaymentMethod.RAZORPAY) {
+      throw new BadRequestException(
+        'This order does not require online payment',
+      );
+    }
+
+    if (order.orderStatus === OrderStatus.CANCELLED) {
+      throw new BadRequestException('Cannot pay for a cancelled order');
+    }
+
+    if (order.paymentStatus === PaymentStatus.PAID) {
+      throw new BadRequestException('Order is already paid');
+    }
+
+    if (
+      order.paymentStatus !== PaymentStatus.FAILED &&
+      order.paymentStatus !== PaymentStatus.PENDING
+    ) {
+      throw new BadRequestException('Payment cannot be retried for this order');
+    }
+
+    if (order.stockRestored) {
+      const reservations = order.items.map((item) => ({
+        productId: item.productId,
+        quantity: item.quantity,
+      }));
+
+      await this.productsService.reserveMultipleStocks(reservations, {
+        type: InventoryTransactionType.ORDER,
+        referenceId: order.orderNumber,
+      });
+
+      for (const item of order.items) {
+        item.stockReleased = false;
+      }
+
+      order.stockRestored = false;
+    }
+
+    order.paymentStatus = PaymentStatus.PENDING;
+    order.paymentFailureReason = undefined;
+    order.paymentFailedAt = undefined;
+
+    await order.save();
+
+    return order;
   }
 }

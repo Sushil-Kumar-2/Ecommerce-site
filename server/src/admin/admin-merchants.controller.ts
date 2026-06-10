@@ -1,4 +1,5 @@
 import {
+  Body,
   Controller,
   Get,
   Param,
@@ -27,6 +28,7 @@ import {
 } from '../common/swagger/swagger.constants';
 import { AdminMerchantsService } from './admin-merchants.service';
 import { AdminMerchantFilterDto } from './dto/admin-merchant-filter.dto';
+import { RejectMerchantDto } from './dto/reject-merchant.dto';
 
 @ApiTags('Admin Merchants')
 @ApiBearerAuth(SWAGGER_BEARER_AUTH)
@@ -71,5 +73,15 @@ export class AdminMerchantsController {
   @ApiOperation({ summary: 'Block merchant (admin only)' })
   block(@Param('id') id: string, @CurrentUser() user: JwtUser) {
     return this.adminMerchantsService.block(id, user.userId);
+  }
+
+  @Patch(':id/reject')
+  @ApiOperation({ summary: 'Reject pending merchant application (admin only)' })
+  reject(
+    @Param('id') id: string,
+    @Body() dto: RejectMerchantDto,
+    @CurrentUser() user: JwtUser,
+  ) {
+    return this.adminMerchantsService.reject(id, user.userId, dto);
   }
 }

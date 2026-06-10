@@ -14,4 +14,23 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules/recharts')) return 'recharts'
+          if (id.includes('node_modules/@reduxjs') || id.includes('node_modules/react-redux')) {
+            return 'redux'
+          }
+          if (
+            id.includes('node_modules/react/') ||
+            id.includes('node_modules/react-dom/') ||
+            id.includes('node_modules/react-router-dom/')
+          ) {
+            return 'vendor'
+          }
+        },
+      },
+    },
+  },
 })

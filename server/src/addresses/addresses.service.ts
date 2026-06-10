@@ -23,7 +23,8 @@ export class AddressesService {
       await this.addressModel.updateMany({ userId }, { isDefault: false });
     }
 
-    const isFirstAddress = (await this.addressModel.countDocuments({ userId })) === 0;
+    const isFirstAddress =
+      (await this.addressModel.countDocuments({ userId })) === 0;
 
     const address = new this.addressModel({
       ...createAddressDto,
@@ -122,7 +123,9 @@ export class AddressesService {
       const value = address[field];
 
       if (typeof value !== 'string' || !value.trim()) {
-        throw new BadRequestException(`Address is incomplete: missing ${field}`);
+        throw new BadRequestException(
+          `Address is incomplete: missing ${field}`,
+        );
       }
     }
 

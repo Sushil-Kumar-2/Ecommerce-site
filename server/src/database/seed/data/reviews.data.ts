@@ -4,7 +4,8 @@ export const SEED_REVIEWS = [
     productSlug: 'demo-wireless-mouse',
     customerKey: 'customer' as const,
     rating: 5,
-    comment: 'Great mouse, smooth tracking and comfortable grip. RGB looks awesome!',
+    comment:
+      'Great mouse, smooth tracking and comfortable grip. RGB looks awesome!',
   },
   {
     orderNumber: 'DEMO-ORD-003',

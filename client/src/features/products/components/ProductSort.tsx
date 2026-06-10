@@ -1,4 +1,11 @@
 import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { cn } from '@/lib/utils'
 
 import { ProductSort } from '../product.types'
@@ -20,18 +27,18 @@ export function ProductSortSelect({ value, onChange, className }: ProductSortSel
   return (
     <div className={cn('space-y-2', className)}>
       <Label htmlFor="product-sort">Sort by</Label>
-      <select
-        id="product-sort"
-        value={value}
-        onChange={(event) => onChange(event.target.value as ProductSort)}
-        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
-      >
-        {SORT_OPTIONS.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
+      <Select value={value} onValueChange={(next) => onChange(next as ProductSort)}>
+        <SelectTrigger id="product-sort" size="sm" className="min-w-[180px]">
+          <SelectValue placeholder="Sort products" />
+        </SelectTrigger>
+        <SelectContent>
+          {SORT_OPTIONS.map((option) => (
+            <SelectItem key={option.value} value={option.value}>
+              {option.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     </div>
   )
 }

@@ -1,11 +1,12 @@
-import { Heart, Loader2, Minus, Plus, ShoppingCart, Star, Zap } from 'lucide-react'
+import { Heart, Loader2, Minus, Plus, ShoppingCart, Zap } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { toast } from 'sonner'
 
 import { EmptyState } from '@/components/common/EmptyState'
 import { ErrorState } from '@/components/common/ErrorState'
-import { PriceBlock, ProductRow, TrustBadges } from '@/components/storefront'
+import { PageShell, RatingStars, StatusBadge } from '@/components/design-system'
+import { PriceBlock, StickyMobileCTA, TrustBadges } from '@/components/storefront'
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -23,131 +24,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { ProductDetailSkeleton } from '@/features/products/components/ProductGrid'
+import { ProductCard } from '@/features/products/components/ProductCard'
+import { ProductCardSkeleton } from '@/features/products/components/ProductCardSkeleton'
 import {
   useCategories,
   useProductDetail,
   useRelatedProducts,
 } from '@/features/products/hooks'
 import type { ProductVariant } from '@/features/products/product.types'
-import { getProductImage, getStockLabel } from '@/features/products/utils'
+import { buildCategoryMap, getProductImage, getStockLabel } from '@/features/products/utils'
 import { useAuth } from '@/features/auth'
 import { useAddToCart } from '@/features/cart'
-import { useProductReviews } from '@/features/reviews'
+import { ProductReviewsSection } from '@/features/reviews'
 import { useAddToWishlist } from '@/features/wishlist'
 import { getApiErrorMessage } from '@/utils/api-error'
 import { ROUTES } from '@/utils/routes'
 import { cn } from '@/lib/utils'
-
-function RatingStars({ rating, size = 'sm' }: { rating: number; size?: 'sm' | 'lg' }) {
-  return (
-    <div className="flex items-center gap-0.5">
-      {Array.from({ length: 5 }).map((_, index) => (
-        <Star
-          key={index}
-          className={cn(
-            size === 'lg' ? 'size-5' : 'size-4',
-            index < Math.round(rating)
-              ? 'fill-amber-400 text-amber-400'
-              : 'text-muted-foreground',
-          )}
-        />
-      ))}
-    </div>
-  )
-}
-
-function ProductReviewsSection({
-  productId,
-  averageRating,
-  totalReviews,
-}: {
-  productId: string
-  averageRating: number
-  totalReviews: number
-}) {
-  const { data: reviews = [], isLoading } = useProductReviews(productId)
-
-  const breakdown = useMemo(() => {
-    return [5, 4, 3, 2, 1].map((star) => {
-      const count = reviews.filter((review) => review.rating === star).length
-      const percent = reviews.length > 0 ? Math.round((count / reviews.length) * 100) : 0
-      return { star, count, percent }
-    })
-  }, [reviews])
-
-  if (isLoading) {
-    return <p className="text-sm text-muted-foreground">Loading reviews...</p>
-  }
-
-  if (reviews.length === 0) {
-    return (
-      <EmptyState
-        title="No reviews yet"
-        description="Be the first to review this product after purchase."
-      />
-    )
-  }
-
-  return (
-    <div className="grid gap-8 lg:grid-cols-[240px_1fr]">
-      <div className="space-y-4 rounded-xl border p-4">
-        <div className="text-center">
-          <p className="text-4xl font-semibold">{averageRating.toFixed(1)}</p>
-          <RatingStars rating={averageRating} size="lg" />
-          <p className="mt-1 text-sm text-muted-foreground">
-            {totalReviews} review{totalReviews === 1 ? '' : 's'}
-          </p>
-        </div>
-        <div className="space-y-2">
-          {breakdown.map(({ star, count, percent }) => (
-            <div key={star} className="flex items-center gap-2 text-xs">
-              <span className="w-8">{star}★</span>
-              <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
-                <div
-                  className="h-full rounded-full bg-amber-400"
-                  style={{ width: `${percent}%` }}
-                />
-              </div>
-              <span className="w-6 text-muted-foreground">{count}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="space-y-4">
-        {reviews.map((review) => (
-          <div key={review._id} className="rounded-xl border p-4">
-            <div className="flex flex-wrap items-center gap-2">
-              <RatingStars rating={review.rating} />
-              {review.isVerifiedPurchase ? (
-                <span className="rounded bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800">
-                  Verified purchase
-                </span>
-              ) : null}
-            </div>
-            {review.comment ? (
-              <p className="mt-2 text-sm leading-relaxed">{review.comment}</p>
-            ) : null}
-            {review.images.length > 0 ? (
-              <div className="mt-3 flex flex-wrap gap-2">
-                {review.images.map((image, index) => (
-                  <img
-                    key={`${image}-${index}`}
-                    src={image}
-                    alt=""
-                    className="size-16 rounded-lg object-cover ring-1 ring-foreground/10"
-                  />
-                ))}
-              </div>
-            ) : null}
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
 
 export function ProductDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -171,6 +65,8 @@ export function ProductDetailPage() {
     isLoading: isRelatedLoading,
   } = useRelatedProducts(id)
 
+  const categoryMap = useMemo(() => buildCategoryMap(categories), [categories])
+
   const images = useMemo(() => {
     if (!product) return []
     return product.images.length > 0 ? product.images : []
@@ -193,26 +89,38 @@ export function ProductDetailPage() {
 
   if (isLoading) {
     return (
-      <div className="mx-auto max-w-7xl px-4 py-6">
-        <ProductDetailSkeleton />
-      </div>
+      <PageShell className="pb-24 md:pb-8">
+        <div className="mb-6 space-y-2">
+          <Skeleton className="h-3 w-48" />
+        </div>
+        <div className="grid gap-8 lg:grid-cols-2 lg:gap-12">
+          <Skeleton className="aspect-square w-full rounded-2xl" />
+          <div className="space-y-4">
+            <Skeleton className="h-4 w-24" />
+            <Skeleton className="h-9 w-3/4" />
+            <Skeleton className="h-6 w-32" />
+            <Skeleton className="h-10 w-40" />
+            <Skeleton className="h-24 w-full" />
+          </div>
+        </div>
+      </PageShell>
     )
   }
 
   if (error) {
     return (
-      <div className="mx-auto max-w-7xl px-4 py-6">
+      <PageShell>
         <ErrorState
           message={getApiErrorMessage(error, 'Failed to load product details.')}
           onRetry={() => void refetch()}
         />
-      </div>
+      </PageShell>
     )
   }
 
   if (!product) {
     return (
-      <div className="mx-auto max-w-7xl px-4 py-6">
+      <PageShell>
         <EmptyState
           title="Product not found"
           description="This product may have been removed or is no longer available."
@@ -222,7 +130,7 @@ export function ProductDetailPage() {
             </Button>
           }
         />
-      </div>
+      </PageShell>
     )
   }
 
@@ -307,12 +215,14 @@ export function ProductDetailPage() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-6">
-      <Breadcrumb className="mb-6">
+    <PageShell className="pb-24 md:pb-10">
+      <Breadcrumb className="mb-6 text-xs text-muted-foreground">
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink asChild>
-              <Link to={ROUTES.home}>Home</Link>
+              <Link to={ROUTES.home} className="transition-colors hover:text-foreground">
+                Home
+              </Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
           <BreadcrumbSeparator />
@@ -320,7 +230,10 @@ export function ProductDetailPage() {
             <>
               <BreadcrumbItem>
                 <BreadcrumbLink asChild>
-                  <Link to={`${ROUTES.products}?categoryId=${category._id}`}>
+                  <Link
+                    to={`${ROUTES.products}?categoryId=${category._id}`}
+                    className="transition-colors hover:text-foreground"
+                  >
                     {category.name}
                   </Link>
                 </BreadcrumbLink>
@@ -329,22 +242,22 @@ export function ProductDetailPage() {
             </>
           ) : null}
           <BreadcrumbItem>
-            <BreadcrumbPage className="max-w-[200px] truncate sm:max-w-none">
+            <BreadcrumbPage className="max-w-[200px] truncate font-normal text-muted-foreground sm:max-w-md">
               {product.title}
             </BreadcrumbPage>
           </BreadcrumbItem>
         </BreadcrumbList>
       </Breadcrumb>
 
-      <div className="grid gap-8 lg:grid-cols-2">
-        <div className="space-y-3">
-          <div className="overflow-hidden rounded-xl border border-border/60 bg-white shadow-sm">
+      <div className="grid gap-8 lg:grid-cols-2 lg:gap-12 xl:gap-16">
+        <div className="space-y-4">
+          <div className="overflow-hidden rounded-2xl border border-border/60 bg-card shadow-sm">
             {activeImage ? (
-              <div className="aspect-square">
+              <div className="aspect-square bg-muted/20">
                 <img
                   src={activeImage}
                   alt={product.title}
-                  className="size-full object-contain p-6 sm:p-10"
+                  className="size-full object-cover transition-opacity duration-300"
                 />
               </div>
             ) : (
@@ -364,69 +277,76 @@ export function ProductDetailPage() {
                   aria-label={`View image ${index + 1}`}
                   aria-pressed={selectedImageIndex === index}
                   className={cn(
-                    'size-16 shrink-0 overflow-hidden rounded-lg border-2 bg-white transition-colors sm:size-20',
+                    'size-16 shrink-0 overflow-hidden rounded-lg border-2 bg-card transition-all sm:size-20',
                     selectedImageIndex === index
-                      ? 'border-brand-primary shadow-sm'
-                      : 'border-border hover:border-brand-primary/40',
+                      ? 'border-brand-primary shadow-sm ring-2 ring-brand-primary/20'
+                      : 'border-border/60 hover:border-brand-primary/40',
                   )}
                 >
-                  <img
-                    src={image}
-                    alt=""
-                    className="size-full object-contain p-1.5"
-                  />
+                  <img src={image} alt="" className="size-full object-cover" />
                 </button>
               ))}
             </div>
           ) : null}
         </div>
 
-        <div className="space-y-5">
-          <div className="space-y-2">
-            {product.featured ? (
-              <span className="inline-block rounded bg-brand-accent px-2 py-0.5 text-xs font-semibold text-foreground">
-                Featured
-              </span>
+        <div className="flex flex-col gap-6">
+          <div className="space-y-3 border-b border-border/60 pb-6">
+            {category ? (
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                {category.name}
+              </p>
             ) : null}
-            <h1 className="font-heading text-2xl font-semibold tracking-tight sm:text-3xl">
+
+            <div className="flex flex-wrap items-start gap-2">
+              {product.featured ? (
+                <span className="rounded-md bg-brand-accent/15 px-2 py-0.5 text-xs font-semibold text-brand-accent">
+                  Featured
+                </span>
+              ) : null}
+              <StatusBadge
+                status={stock.inStock ? 'in_stock' : 'out_of_stock'}
+                label={stock.label}
+                variant={stock.inStock ? 'success' : 'destructive'}
+              />
+            </div>
+
+            <h1 className="font-heading text-2xl font-bold tracking-tight text-foreground sm:text-3xl lg:text-4xl">
               {product.title}
             </h1>
-            <div className="flex flex-wrap items-center gap-2 text-sm">
-              <RatingStars rating={product.averageRating} />
-              <span className="font-medium">{product.averageRating.toFixed(1)}</span>
-              <span className="text-muted-foreground">
-                ({product.totalReviews} reviews)
-              </span>
-            </div>
-          </div>
 
-          <PriceBlock
-            price={product.price}
-            discountPrice={product.discountPrice}
-            size="lg"
-          />
-
-          <p
-            className={cn(
-              'inline-flex rounded-full px-3 py-1 text-xs font-medium',
-              stock.inStock
-                ? 'bg-emerald-100 text-emerald-800'
-                : 'bg-destructive/10 text-destructive',
+            {product.totalReviews > 0 ? (
+              <div className="flex flex-wrap items-center gap-2">
+                <RatingStars rating={product.averageRating} size="md" showValue />
+                <span className="text-sm text-muted-foreground">
+                  ({product.totalReviews.toLocaleString()}{' '}
+                  {product.totalReviews === 1 ? 'Review' : 'Reviews'})
+                </span>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">No reviews yet</p>
             )}
-          >
-            {stock.label}
-          </p>
+
+            <PriceBlock
+              price={product.price}
+              discountPrice={product.discountPrice}
+              size="lg"
+              className="pt-1"
+            />
+          </div>
 
           {hasVariants ? (
             <div className="space-y-2">
-              <Label>Variant</Label>
+              <Label htmlFor="variant-select" className="text-sm font-medium">
+                Variant
+              </Label>
               <Select
                 value={
                   activeVariant ? `${activeVariant.name}:${activeVariant.value}` : undefined
                 }
                 onValueChange={handleVariantChange}
               >
-                <SelectTrigger className="w-full">
+                <SelectTrigger id="variant-select" className="w-full max-w-sm">
                   <SelectValue placeholder="Select variant" />
                 </SelectTrigger>
                 <SelectContent>
@@ -443,102 +363,150 @@ export function ProductDetailPage() {
             </div>
           ) : null}
 
-          <div className="space-y-2">
-            <Label>Quantity</Label>
-            <div className="flex w-fit items-center rounded-lg border">
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                disabled={quantity <= 1}
-                onClick={() => setQuantity((value) => Math.max(1, value - 1))}
+          <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-center">
+            <div className="flex items-center gap-3">
+              <Label htmlFor="quantity" className="sr-only">
+                Quantity
+              </Label>
+              <div
+                id="quantity"
+                className="flex h-11 items-center rounded-lg border border-border/80 bg-background shadow-sm"
               >
-                <Minus />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  className="rounded-r-none"
+                  disabled={quantity <= 1}
+                  onClick={() => setQuantity((value) => Math.max(1, value - 1))}
+                  aria-label="Decrease quantity"
+                >
+                  <Minus />
+                </Button>
+                <span className="min-w-12 text-center text-sm font-semibold tabular-nums">
+                  {clampedQuantity}
+                </span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  className="rounded-l-none"
+                  disabled={clampedQuantity >= activeStock}
+                  onClick={() => setQuantity((value) => value + 1)}
+                  aria-label="Increase quantity"
+                >
+                  <Plus />
+                </Button>
+              </div>
+            </div>
+
+            <div className="flex flex-1 flex-wrap items-center gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                size="lg"
+                className="min-w-[140px] flex-1 border-2 transition-colors sm:flex-none"
+                disabled={!stock.inStock || isAddingToCart}
+                onClick={() => void handleAddToCart()}
+              >
+                {isAddingToCart ? (
+                  <Loader2 className="animate-spin" />
+                ) : (
+                  <ShoppingCart />
+                )}
+                Add to Cart
               </Button>
-              <span className="min-w-10 text-center text-sm">{clampedQuantity}</span>
               <Button
-                variant="ghost"
-                size="icon-sm"
-                disabled={clampedQuantity >= activeStock}
-                onClick={() => setQuantity((value) => value + 1)}
+                type="button"
+                size="lg"
+                className="min-w-[140px] flex-1 bg-foreground text-background shadow-md transition-all hover:bg-foreground/90 hover:shadow-lg sm:flex-none"
+                disabled={!stock.inStock || isAddingToCart}
+                onClick={() => void handleBuyNow()}
               >
-                <Plus />
+                <Zap />
+                Buy Now
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon-lg"
+                className="shrink-0"
+                disabled={!stock.inStock || isAddingToWishlist}
+                onClick={() => void handleAddToWishlist()}
+                aria-label="Add to wishlist"
+              >
+                {isAddingToWishlist ? (
+                  <Loader2 className="animate-spin" />
+                ) : (
+                  <Heart />
+                )}
               </Button>
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-3">
-            <Button
-              className="bg-brand-primary hover:bg-brand-primary/90"
-              disabled={!stock.inStock || isAddingToCart}
-              onClick={() => void handleAddToCart()}
-            >
-              {isAddingToCart ? (
-                <Loader2 className="animate-spin" />
-              ) : (
-                <ShoppingCart />
-              )}
-              Add to Cart
-            </Button>
-            <Button
-              variant="secondary"
-              className="bg-brand-accent text-foreground hover:bg-brand-accent/90"
-              disabled={!stock.inStock || isAddingToCart}
-              onClick={() => void handleBuyNow()}
-            >
-              <Zap />
-              Buy Now
-            </Button>
-            <Button
-              variant="outline"
-              disabled={!stock.inStock || isAddingToWishlist}
-              onClick={() => void handleAddToWishlist()}
-            >
-              {isAddingToWishlist ? (
-                <Loader2 className="animate-spin" />
-              ) : (
-                <Heart />
-              )}
-              Wishlist
-            </Button>
-          </div>
-
-          <TrustBadges className="justify-start border-t pt-4" />
+          <TrustBadges variant="grid" />
         </div>
       </div>
 
-      <section className="mt-12">
-        <Tabs defaultValue="description">
-          <TabsList className="w-full justify-start">
-            <TabsTrigger value="description">Description</TabsTrigger>
-            <TabsTrigger value="specifications">Specifications</TabsTrigger>
-            <TabsTrigger value="reviews">
+      <section className="mt-14 border-t border-border/60 pt-10">
+        <Tabs defaultValue="description" className="w-full">
+          <TabsList
+            variant="line"
+            className="h-auto w-full justify-start gap-0 rounded-none border-b bg-transparent p-0"
+          >
+            <TabsTrigger
+              value="description"
+              className="rounded-none border-b-2 border-transparent px-4 py-3 data-[state=active]:border-brand-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+            >
+              Description
+            </TabsTrigger>
+            <TabsTrigger
+              value="specifications"
+              className="rounded-none border-b-2 border-transparent px-4 py-3 data-[state=active]:border-brand-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+            >
+              Specifications
+            </TabsTrigger>
+            <TabsTrigger
+              value="reviews"
+              className="rounded-none border-b-2 border-transparent px-4 py-3 data-[state=active]:border-brand-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+            >
               Reviews ({product.totalReviews})
             </TabsTrigger>
           </TabsList>
-          <TabsContent value="description" className="mt-4">
-            <p className="text-sm leading-relaxed text-muted-foreground">
+
+          <TabsContent value="description" className="mt-6 max-w-3xl">
+            <p className="text-sm leading-relaxed text-muted-foreground sm:text-base">
               {product.description || 'No description available for this product.'}
             </p>
           </TabsContent>
-          <TabsContent value="specifications" className="mt-4">
-            <dl className="grid gap-3 text-sm sm:grid-cols-2">
-              <div className="rounded-lg border p-3">
-                <dt className="text-muted-foreground">SKU</dt>
-                <dd className="font-medium">{product.slug || product._id.slice(-8)}</dd>
+
+          <TabsContent value="specifications" className="mt-6">
+            <dl className="grid gap-4 sm:grid-cols-2 lg:max-w-3xl">
+              <div className="rounded-xl border border-border/60 bg-card p-4 shadow-sm">
+                <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  SKU
+                </dt>
+                <dd className="mt-1 font-medium">{product.slug || product._id.slice(-8)}</dd>
               </div>
-              <div className="rounded-lg border p-3">
-                <dt className="text-muted-foreground">Stock</dt>
-                <dd className="font-medium">{activeStock} units</dd>
+              <div className="rounded-xl border border-border/60 bg-card p-4 shadow-sm">
+                <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  Stock
+                </dt>
+                <dd className="mt-1 font-medium">{activeStock} units</dd>
               </div>
               {category ? (
-                <div className="rounded-lg border p-3">
-                  <dt className="text-muted-foreground">Category</dt>
-                  <dd className="font-medium">{category.name}</dd>
+                <div className="rounded-xl border border-border/60 bg-card p-4 shadow-sm">
+                  <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    Category
+                  </dt>
+                  <dd className="mt-1 font-medium">{category.name}</dd>
                 </div>
               ) : null}
               {hasVariants ? (
-                <div className="rounded-lg border p-3 sm:col-span-2">
-                  <dt className="text-muted-foreground">Variants</dt>
+                <div className="rounded-xl border border-border/60 bg-card p-4 shadow-sm sm:col-span-2">
+                  <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    Variants
+                  </dt>
                   <dd className="mt-1 font-medium">
                     {product.variants
                       .map((variant) => `${variant.name}: ${variant.value}`)
@@ -548,7 +516,8 @@ export function ProductDetailPage() {
               ) : null}
             </dl>
           </TabsContent>
-          <TabsContent value="reviews" className="mt-4">
+
+          <TabsContent value="reviews" className="mt-6">
             <ProductReviewsSection
               productId={product._id}
               averageRating={product.averageRating}
@@ -559,14 +528,63 @@ export function ProductDetailPage() {
       </section>
 
       {relatedProducts.length > 0 || isRelatedLoading ? (
-        <section className="mt-12">
-          <ProductRow
-            title="Related products"
-            products={relatedProducts}
-            viewAllHref={ROUTES.products}
-          />
+        <section className="mt-14 border-t border-border/60 pt-10">
+          <div className="mb-6 flex items-center justify-between gap-4">
+            <h2 className="font-heading text-xl font-bold tracking-tight sm:text-2xl">
+              Related products
+            </h2>
+            <Link
+              to={ROUTES.products}
+              className="text-sm font-medium text-brand-primary transition-colors hover:underline"
+            >
+              View all
+            </Link>
+          </div>
+
+          {isRelatedLoading ? (
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3">
+              {Array.from({ length: 3 }).map((_, index) => (
+                <ProductCardSkeleton key={index} />
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3">
+              {relatedProducts.map((related) => (
+                <ProductCard
+                  key={related._id}
+                  product={related}
+                  categoryName={categoryMap[related.categoryId]}
+                  className="h-full"
+                />
+              ))}
+            </div>
+          )}
         </section>
       ) : null}
-    </div>
+
+      <StickyMobileCTA>
+        <div className="flex items-center gap-3">
+          <Button
+            type="button"
+            variant="outline"
+            className="flex-1 border-2"
+            disabled={!stock.inStock || isAddingToCart}
+            onClick={() => void handleAddToCart()}
+          >
+            {isAddingToCart ? <Loader2 className="animate-spin" /> : <ShoppingCart />}
+            Add to Cart
+          </Button>
+          <Button
+            type="button"
+            className="flex-1 bg-foreground text-background hover:bg-foreground/90"
+            disabled={!stock.inStock || isAddingToCart}
+            onClick={() => void handleBuyNow()}
+          >
+            <Zap />
+            Buy Now
+          </Button>
+        </div>
+      </StickyMobileCTA>
+    </PageShell>
   )
 }

@@ -1,4 +1,5 @@
-export { authApi, useLoginMutation, useRegisterMutation, useGetProfileQuery } from './authApi'
+export { authApi, useLoginMutation, useRegisterMutation, useGetAuthSessionQuery, useRefreshSessionMutation } from './authApi'
+export { GoogleSignInButton } from './components/GoogleSignInButton'
 export { loginSchema, registerSchema, toRegisterRequest } from './schemas'
 export type { LoginFormValues, RegisterFormValues } from './schemas'
 export { useAuth } from './useAuth'

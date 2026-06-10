@@ -17,13 +17,21 @@ const categorySchema = z.object({
   slug: z.string().min(1, 'Slug is required'),
   description: z.string().optional(),
   image: z.string().url('Image must be a valid URL').optional().or(z.literal('')),
+  parentCategory: z.string().optional(),
+  status: z.enum(['active', 'inactive']),
   isActive: z.boolean(),
 })
 
 export type CategoryFormValues = z.infer<typeof categorySchema>
 
+interface CategoryOption {
+  _id: string
+  name: string
+}
+
 interface CategoryFormProps {
   defaultValues?: Partial<CategoryFormValues>
+  parentOptions?: CategoryOption[]
   submitLabel?: string
   isLoading?: boolean
   onSubmit: (values: CategoryFormValues) => Promise<void>
@@ -34,11 +42,14 @@ const emptyDefaults: CategoryFormValues = {
   slug: '',
   description: '',
   image: '',
+  parentCategory: '',
+  status: 'active',
   isActive: true,
 }
 
 export function CategoryForm({
   defaultValues,
+  parentOptions = [],
   submitLabel = 'Save category',
   isLoading = false,
   onSubmit,
@@ -78,6 +89,8 @@ export function CategoryForm({
       ...values,
       image: values.image || undefined,
       description: values.description || undefined,
+      parentCategory: values.parentCategory || undefined,
+      isActive: values.status === 'active',
     })
   })
 
@@ -132,14 +145,31 @@ export function CategoryForm({
             placeholder="https://..."
           />
         </div>
-        <div className="flex items-center gap-2">
-          <input
-            id="isActive"
-            type="checkbox"
-            className="size-4 rounded border"
-            {...form.register('isActive')}
-          />
-          <Label htmlFor="isActive">Active</Label>
+        <div className="space-y-2">
+          <Label htmlFor="parentCategory">Parent category (optional)</Label>
+          <select
+            id="parentCategory"
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            {...form.register('parentCategory')}
+          >
+            <option value="">None (top-level)</option>
+            {parentOptions.map((option) => (
+              <option key={option._id} value={option._id}>
+                {option.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="status">Status</Label>
+          <select
+            id="status"
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            {...form.register('status')}
+          >
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
         </div>
         <Button type="submit" disabled={isLoading || isUploading}>
           {isLoading ? <Loader2 className="animate-spin" /> : submitLabel}

@@ -54,6 +54,17 @@ export const merchantProductsApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: [{ type: 'Product', id: 'MY_LIST' }, 'Dashboard'],
     }),
+    submitProduct: builder.mutation<MerchantProduct, string>({
+      query: (id) => ({
+        url: `/products/${id}/submit`,
+        method: 'PATCH',
+      }),
+      invalidatesTags: (_result, _error, id) => [
+        { type: 'Product', id },
+        { type: 'Product', id: 'MY_LIST' },
+        'Dashboard',
+      ],
+    }),
     getMerchantCategories: builder.query<Category[], void>({
       query: () => '/categories',
       providesTags: ['Category'],
@@ -67,5 +78,6 @@ export const {
   useCreateProductMutation,
   useUpdateProductMutation,
   useDeleteProductMutation,
+  useSubmitProductMutation,
   useGetMerchantCategoriesQuery,
 } = merchantProductsApi

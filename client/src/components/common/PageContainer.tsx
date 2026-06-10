@@ -1,45 +1,44 @@
 import type { ReactNode } from 'react'
 
+import {
+  PageHeader,
+  PageShell,
+  type BreadcrumbItemConfig,
+} from '@/components/design-system'
 import { cn } from '@/lib/utils'
 
 interface PageContainerProps {
   title?: string
   description?: string
+  breadcrumbs?: BreadcrumbItemConfig[]
+  actions?: ReactNode
   children: ReactNode
   className?: string
   centered?: boolean
+  variant?: 'storefront' | 'dashboard' | 'account' | 'auth' | 'full'
 }
 
 export function PageContainer({
   title,
   description,
+  breadcrumbs,
+  actions,
   children,
   className,
   centered = false,
+  variant = 'dashboard',
 }: PageContainerProps) {
   return (
-    <div
-      className={cn(
-        'mx-auto w-full max-w-7xl py-6',
-        centered && 'flex min-h-[calc(100vh-8rem)] items-center justify-center',
-        className,
-      )}
-    >
-      <div className={cn('w-full', centered && 'max-w-md')}>
-        {(title || description) && (
-          <header className="mb-6 space-y-1">
-            {title ? (
-              <h1 className="font-heading text-2xl font-semibold tracking-tight">
-                {title}
-              </h1>
-            ) : null}
-            {description ? (
-              <p className="text-sm text-muted-foreground">{description}</p>
-            ) : null}
-          </header>
-        )}
-        {children}
-      </div>
-    </div>
+    <PageShell variant={variant} centered={centered} className={className}>
+      {title ? (
+        <PageHeader
+          title={title}
+          description={description}
+          breadcrumbs={breadcrumbs}
+          actions={actions}
+        />
+      ) : null}
+      <div className={cn('w-full', centered && 'max-w-md')}>{children}</div>
+    </PageShell>
   )
 }

@@ -7,10 +7,12 @@ import { DataTable } from '@/components/common/DataTable'
 import { StringTablePagination } from '@/components/common/TablePagination'
 import { ErrorState } from '@/components/common/ErrorState'
 import { PageContainer } from '@/components/common/PageContainer'
+import { ConfirmAction } from '@/components/design-system'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
+  RejectMerchantDialog,
   useActivateMerchant,
   useAdminMerchants,
   useBlockMerchant,
@@ -52,6 +54,7 @@ export function AdminMerchantsPage() {
   const [activateMerchant, { isLoading: isActivating }] = useActivateMerchant()
   const [blockMerchant, { isLoading: isBlocking }] = useBlockMerchant()
   const [merchantToBlock, setMerchantToBlock] = useState<MerchantUser | null>(null)
+  const [merchantToReject, setMerchantToReject] = useState<MerchantUser | null>(null)
 
   if (error) {
     return (
@@ -133,14 +136,45 @@ export function AdminMerchantsPage() {
                 <Button variant="outline" size="sm" asChild>
                   <Link to={ROUTES.adminMerchantDetail(row._id)}>View</Link>
                 </Button>
-                {row.status !== 'active' ? (
-                  <Button
-                    size="sm"
-                    disabled={isActivating}
-                    onClick={() => void activateMerchant(row._id)}
-                  >
-                    Activate
-                  </Button>
+                {row.status === 'pending' ? (
+                  <>
+                    <ConfirmAction
+                      title="Activate merchant?"
+                      description={`Activate ${row.shopName || row.name}? They will be able to sell on the platform.`}
+                      confirmLabel="Activate"
+                      isLoading={isActivating}
+                      onConfirm={async () => {
+                        await activateMerchant(row._id)
+                      }}
+                      trigger={
+                        <Button size="sm" disabled={isActivating}>
+                          Activate
+                        </Button>
+                      }
+                    />
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => setMerchantToReject(row)}
+                    >
+                      Reject
+                    </Button>
+                  </>
+                ) : row.status !== 'active' ? (
+                  <ConfirmAction
+                    title="Activate merchant?"
+                    description={`Activate ${row.shopName || row.name}? They will be able to sell on the platform.`}
+                    confirmLabel="Activate"
+                    isLoading={isActivating}
+                    onConfirm={async () => {
+                      await activateMerchant(row._id)
+                    }}
+                    trigger={
+                      <Button size="sm" disabled={isActivating}>
+                        Activate
+                      </Button>
+                    }
+                  />
                 ) : (
                   <Button
                     variant="destructive"
@@ -179,6 +213,13 @@ export function AdminMerchantsPage() {
           await blockMerchant(merchantToBlock._id)
           setMerchantToBlock(null)
         }}
+      />
+
+      <RejectMerchantDialog
+        open={merchantToReject != null}
+        onClose={() => setMerchantToReject(null)}
+        merchantId={merchantToReject?._id ?? ''}
+        merchantName={merchantToReject?.shopName || merchantToReject?.name || ''}
       />
     </PageContainer>
   )

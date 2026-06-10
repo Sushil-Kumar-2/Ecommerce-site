@@ -18,8 +18,17 @@ export class User {
   })
   email: string;
 
-  @Prop({ required: true })
-  password: string;
+  @Prop()
+  password?: string;
+
+  @Prop({ unique: true, sparse: true, index: true })
+  googleId?: string;
+
+  @Prop({
+    enum: ['local', 'google'],
+    default: 'local',
+  })
+  authProvider: string;
 
   @Prop()
   phone: string;

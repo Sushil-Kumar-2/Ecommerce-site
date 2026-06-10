@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { isValidObjectId, Model } from 'mongoose';
 
@@ -7,9 +11,9 @@ import { Product, ProductDocument } from '../products/schemas/product.schema';
 import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { AuditAction, AuditResource } from '../audit-logs/audit-log.enums';
 import { AdminMerchantFilterDto } from './dto/admin-merchant-filter.dto';
+import { RejectMerchantDto } from './dto/reject-merchant.dto';
 
-const MERCHANT_SELECT =
-  '-password name email phone role status avatar shopLogo shopName shopDescription gstNumber businessAddress emailVerified createdAt updatedAt';
+const MERCHANT_SELECT = '-password';
 
 @Injectable()
 export class AdminMerchantsService {
@@ -92,9 +96,7 @@ export class AdminMerchantsService {
       throw new NotFoundException('Merchant not found');
     }
 
-    return this.productModel
-      .find({ merchantId })
-      .sort({ createdAt: -1 });
+    return this.productModel.find({ merchantId }).sort({ createdAt: -1 });
   }
 
   async activate(id: string, adminId: string) {
@@ -128,6 +130,33 @@ export class AdminMerchantsService {
       resource: AuditResource.USER,
       resourceId: id,
       metadata: { merchantEmail: merchant.email },
+    });
+
+    return merchant;
+  }
+
+  async reject(id: string, adminId: string, dto: RejectMerchantDto) {
+    const merchant = await this.findOne(id);
+
+    if (merchant.status !== 'pending') {
+      throw new BadRequestException(
+        'Only pending merchant applications can be rejected',
+      );
+    }
+
+    merchant.status = 'blocked';
+    await merchant.save();
+
+    await this.auditLogsService.createLog({
+      userId: adminId,
+      role: 'admin',
+      action: AuditAction.MERCHANT_REJECTED,
+      resource: AuditResource.USER,
+      resourceId: id,
+      metadata: {
+        merchantEmail: merchant.email,
+        reason: dto.reason ?? null,
+      },
     });
 
     return merchant;

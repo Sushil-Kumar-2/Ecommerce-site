@@ -9,7 +9,7 @@ import type {
 export const adminCategoriesApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getAdminCategories: builder.query<AdminCategory[], void>({
-      query: () => '/categories',
+      query: () => '/categories?includeAll=true',
       providesTags: (result) =>
         result
           ? [

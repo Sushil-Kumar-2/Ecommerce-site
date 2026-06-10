@@ -26,7 +26,12 @@ export interface SeedOrderDef {
   shippedAt?: string;
   deliveredAt?: string;
   cancelledAt?: string;
-  fulfillmentStatus?: 'pending' | 'accepted' | 'ready_to_ship' | 'shipped' | 'rejected';
+  fulfillmentStatus?:
+    | 'pending'
+    | 'accepted'
+    | 'ready_to_ship'
+    | 'shipped'
+    | 'rejected';
   trackingNumber?: string;
 }
 
@@ -67,7 +72,11 @@ export const SEED_ORDERS: SeedOrderDef[] = [
     orderStatus: 'processing',
     items: [
       { productSlug: 'demo-power-bank', quantity: 1 },
-      { productSlug: 'demo-cotton-tshirt', quantity: 1, variantDetails: 'Size: L' },
+      {
+        productSlug: 'demo-cotton-tshirt',
+        quantity: 1,
+        variantDetails: 'Size: L',
+      },
     ],
     paidAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
     fulfillmentStatus: 'accepted',

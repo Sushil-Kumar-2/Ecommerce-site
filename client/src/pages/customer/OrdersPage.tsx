@@ -4,6 +4,7 @@ import { useMemo, useState, type MouseEvent } from 'react'
 
 import { EmptyState } from '@/components/common/EmptyState'
 import { ErrorState } from '@/components/common/ErrorState'
+import { StatusBadge } from '@/components/design-system'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -18,7 +19,6 @@ import {
 import { formatPrice } from '@/features/products/utils'
 import { getApiErrorMessage } from '@/utils/api-error'
 import { ROUTES } from '@/utils/routes'
-import { cn } from '@/lib/utils'
 
 function OrdersPageSkeleton() {
   return (
@@ -38,20 +38,6 @@ function paymentStatusVariant(status: string) {
       return 'destructive'
     default:
       return 'secondary'
-  }
-}
-
-function orderStatusClass(status: string) {
-  switch (status) {
-    case 'delivered':
-      return 'border-emerald-200 bg-emerald-50 text-emerald-800'
-    case 'cancelled':
-      return 'border-destructive/30 bg-destructive/10 text-destructive'
-    case 'shipped':
-    case 'out_for_delivery':
-      return 'border-blue-200 bg-blue-50 text-blue-800'
-    default:
-      return 'border-amber-200 bg-amber-50 text-amber-800'
   }
 }
 
@@ -132,14 +118,10 @@ function OrderCard({ order }: { order: Order }) {
           </p>
 
           <div className="flex flex-wrap items-center gap-2">
-            <span
-              className={cn(
-                'rounded-full border px-2.5 py-0.5 text-xs font-medium',
-                orderStatusClass(order.orderStatus),
-              )}
-            >
-              {formatStatusLabel(order.orderStatus)}
-            </span>
+            <StatusBadge
+              status={order.orderStatus}
+              label={formatStatusLabel(order.orderStatus)}
+            />
             <Badge variant={paymentStatusVariant(order.paymentStatus)}>
               {formatStatusLabel(order.paymentStatus)}
             </Badge>

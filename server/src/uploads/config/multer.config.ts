@@ -21,7 +21,11 @@ export const imageMulterOptions: MulterOptions = {
     files: MAX_MULTIPLE_FILES,
   },
   fileFilter: (_req, file, callback) => {
-    if (!ALLOWED_IMAGE_MIME_TYPES.includes(file.mimetype as (typeof ALLOWED_IMAGE_MIME_TYPES)[number])) {
+    if (
+      !ALLOWED_IMAGE_MIME_TYPES.includes(
+        file.mimetype as (typeof ALLOWED_IMAGE_MIME_TYPES)[number],
+      )
+    ) {
       callback(
         new BadRequestException(
           'Only JPEG, PNG, WebP, and GIF images are allowed',

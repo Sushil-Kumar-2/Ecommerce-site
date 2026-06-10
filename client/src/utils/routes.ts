@@ -20,6 +20,8 @@ export const ROUTES = {
   paymentFailed: '/payment/failed',
   login: '/auth/login',
   register: '/auth/register',
+  googleCallback: '/auth/google/callback',
+  becomeASeller: '/become-a-seller',
   merchant: '/merchant',
   merchantProducts: '/merchant/products',
   merchantProductNew: '/merchant/products/new',

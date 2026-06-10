@@ -21,14 +21,14 @@ export const paymentsApi = baseApi.injectEndpoints({
         method: 'POST',
         body,
       }),
-      invalidatesTags: ['Order', 'Payment'],
+      invalidatesTags: ['Cart', 'Order', 'Payment'],
     }),
     markPaymentFailed: builder.mutation<Order, string>({
       query: (orderId) => ({
         url: `/payments/failed/${orderId}`,
         method: 'POST',
       }),
-      invalidatesTags: ['Order', 'Payment'],
+      invalidatesTags: ['Cart', 'Order', 'Payment'],
     }),
   }),
 })

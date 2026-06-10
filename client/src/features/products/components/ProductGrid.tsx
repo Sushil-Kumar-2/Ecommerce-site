@@ -2,21 +2,24 @@ import { Skeleton } from '@/components/ui/skeleton'
 
 import type { Product } from '../product.types'
 import { ProductCard } from './ProductCard'
+import { ProductCardSkeleton } from './ProductCardSkeleton'
 
 interface ProductGridProps {
   products?: Product[]
   isLoading?: boolean
   skeletonCount?: number
+  categoryMap?: Record<string, string>
 }
 
 export function ProductGrid({
   products,
   isLoading = false,
   skeletonCount = 8,
+  categoryMap = {},
 }: ProductGridProps) {
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-6 xl:grid-cols-4">
         {Array.from({ length: skeletonCount }).map((_, index) => (
           <ProductCardSkeleton key={index} />
         ))}
@@ -25,27 +28,20 @@ export function ProductGrid({
   }
 
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+    <div className="grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-6 xl:grid-cols-4">
       {(products ?? []).map((product) => (
-        <ProductCard key={product._id} product={product} />
+        <ProductCard
+          key={product._id}
+          product={product}
+          categoryName={categoryMap[product.categoryId]}
+          className="h-full"
+        />
       ))}
     </div>
   )
 }
 
-function ProductCardSkeleton() {
-  return (
-    <div className="overflow-hidden rounded-lg ring-1 ring-border/60">
-      <Skeleton className="h-40 w-full rounded-none sm:h-44" />
-      <div className="space-y-2 p-3">
-        <Skeleton className="h-4 w-full" />
-        <Skeleton className="h-4 w-2/3" />
-        <Skeleton className="h-3 w-1/2" />
-        <Skeleton className="h-5 w-1/3" />
-      </div>
-    </div>
-  )
-}
+export { ProductCardSkeleton } from './ProductCardSkeleton'
 
 export function ProductDetailSkeleton() {
   return (
