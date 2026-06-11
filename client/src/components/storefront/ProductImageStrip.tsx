@@ -1,9 +1,7 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ChevronLeft, ChevronRight, ImageOff } from 'lucide-react'
+import { ChevronRight, ImageOff } from 'lucide-react'
 
 import { RatingStars } from '@/components/design-system'
-import { Button } from '@/components/ui/button'
 import type { Product } from '@/features/products/product.types'
 import {
   formatPrice,
@@ -13,6 +11,9 @@ import {
   getProductRoute,
 } from '@/features/products/utils'
 import { cn } from '@/lib/utils'
+
+import { HorizontalScrollRail } from './HorizontalScrollRail'
+import { useHorizontalScroll } from './useHorizontalScroll'
 
 interface ProductImageStripProps {
   title: string
@@ -96,47 +97,17 @@ export function ProductImageStrip({
   viewAllHref,
   className,
 }: ProductImageStripProps) {
-  const viewportRef = useRef<HTMLDivElement>(null)
-  const [canScrollLeft, setCanScrollLeft] = useState(false)
-  const [canScrollRight, setCanScrollRight] = useState(false)
-
-  const updateScrollState = useCallback(() => {
-    const viewport = viewportRef.current
-    if (!viewport) return
-
-    const { scrollLeft, scrollWidth, clientWidth } = viewport
-    setCanScrollLeft(scrollLeft > 4)
-    setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 4)
-  }, [])
-
-  useEffect(() => {
-    const viewport = viewportRef.current
-    if (!viewport) return
-
-    updateScrollState()
-    viewport.addEventListener('scroll', updateScrollState, { passive: true })
-    window.addEventListener('resize', updateScrollState)
-
-    return () => {
-      viewport.removeEventListener('scroll', updateScrollState)
-      window.removeEventListener('resize', updateScrollState)
-    }
-  }, [products, updateScrollState])
-
-  const scroll = (direction: 'left' | 'right') => {
-    const viewport = viewportRef.current
-    if (!viewport) return
-
-    const firstCard = viewport.querySelector<HTMLElement>('[data-strip-card]')
-    const cardWidth = firstCard?.offsetWidth ?? 168
-    const gap = 12
-    const distance = (cardWidth + gap) * CARD_SCROLL_COUNT
-
-    viewport.scrollBy({
-      left: direction === 'left' ? -distance : distance,
-      behavior: 'smooth',
-    })
-  }
+  const {
+    viewportRef,
+    canScrollLeft,
+    canScrollRight,
+    hasOverflow,
+    scrollLeft,
+    scrollRight,
+  } = useHorizontalScroll(products.length, {
+    cardSelector: '[data-strip-card]',
+    cardScrollCount: CARD_SCROLL_COUNT,
+  })
 
   if (products.length === 0) return null
 
@@ -160,53 +131,20 @@ export function ProductImageStrip({
         ) : null}
       </div>
 
-      <div className="relative px-4 py-4 sm:px-5">
-        {canScrollLeft ? (
-          <>
-            <div
-              className="pointer-events-none absolute top-0 bottom-0 left-0 z-[5] w-10 bg-gradient-to-r from-card to-transparent sm:w-14"
-              aria-hidden
-            />
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              aria-label="Scroll left"
-              className="absolute top-1/2 left-1 z-10 hidden size-10 -translate-y-1/2 rounded-full border-border bg-background shadow-md sm:flex md:opacity-0 md:transition-opacity md:group-hover/strip:opacity-100"
-              onClick={() => scroll('left')}
-            >
-              <ChevronLeft className="size-5" />
-            </Button>
-          </>
-        ) : null}
-
-        {canScrollRight ? (
-          <>
-            <div
-              className="pointer-events-none absolute top-0 right-0 bottom-0 z-[5] w-10 bg-gradient-to-l from-card to-transparent sm:w-14"
-              aria-hidden
-            />
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              aria-label="Scroll right"
-              className="absolute top-1/2 right-1 z-10 hidden size-10 -translate-y-1/2 rounded-full border-border bg-background shadow-md sm:flex md:opacity-0 md:transition-opacity md:group-hover/strip:opacity-100"
-              onClick={() => scroll('right')}
-            >
-              <ChevronRight className="size-5" />
-            </Button>
-          </>
-        ) : null}
-
-        <div
-          ref={viewportRef}
-          className="flex gap-3 overflow-x-auto scroll-smooth py-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      <div className="px-2 py-4 sm:px-3 sm:py-4 md:px-4">
+        <HorizontalScrollRail
+          viewportRef={viewportRef}
+          canScrollLeft={canScrollLeft}
+          canScrollRight={canScrollRight}
+          hasOverflow={hasOverflow}
+          onScrollLeft={scrollLeft}
+          onScrollRight={scrollRight}
+          viewportClassName="flex gap-3 py-0.5"
         >
           {products.map((product) => (
             <StripProductTile key={product._id} product={product} />
           ))}
-        </div>
+        </HorizontalScrollRail>
       </div>
     </section>
   )

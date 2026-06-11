@@ -1,135 +1,160 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
 
-import { Button } from '@/components/ui/button'
+import { ChevronRight } from 'lucide-react'
+
+
+
 import { ProductCard } from '@/features/products/components/ProductCard'
+
 import type { Product } from '@/features/products/product.types'
+
 import { cn } from '@/lib/utils'
 
+
+
+import { HorizontalScrollRail } from './HorizontalScrollRail'
+
+import { useHorizontalScroll } from './useHorizontalScroll'
+
+
+
 interface ProductRowProps {
+
   title: string
+
   products: Product[]
+
   categoryMap?: Record<string, string>
+
   viewAllHref?: string
+
   className?: string
+
 }
+
+
 
 const CARD_SCROLL_COUNT = 4
 
+
+
 export function ProductRow({
+
   title,
+
   products,
+
   categoryMap = {},
+
   viewAllHref,
+
   className,
+
 }: ProductRowProps) {
-  const viewportRef = useRef<HTMLDivElement>(null)
-  const [canScrollLeft, setCanScrollLeft] = useState(false)
-  const [canScrollRight, setCanScrollRight] = useState(false)
 
-  const updateScrollState = useCallback(() => {
-    const viewport = viewportRef.current
-    if (!viewport) return
+  const {
+    viewportRef,
+    canScrollLeft,
+    canScrollRight,
+    hasOverflow,
+    scrollLeft,
+    scrollRight,
+  } = useHorizontalScroll(products.length, {
+    cardSelector: '[data-product-card]',
+    cardScrollCount: CARD_SCROLL_COUNT,
+  })
 
-    const { scrollLeft, scrollWidth, clientWidth } = viewport
-    setCanScrollLeft(scrollLeft > 4)
-    setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 4)
-  }, [])
 
-  useEffect(() => {
-    const viewport = viewportRef.current
-    if (!viewport) return
-
-    updateScrollState()
-    viewport.addEventListener('scroll', updateScrollState, { passive: true })
-    window.addEventListener('resize', updateScrollState)
-
-    return () => {
-      viewport.removeEventListener('scroll', updateScrollState)
-      window.removeEventListener('resize', updateScrollState)
-    }
-  }, [products, updateScrollState])
-
-  const scrollByCards = (direction: 'left' | 'right') => {
-    const viewport = viewportRef.current
-    if (!viewport) return
-
-    const firstCard = viewport.querySelector<HTMLElement>('[data-product-card]')
-    const cardWidth = firstCard?.offsetWidth ?? 200
-    const gap = 12
-    const distance = (cardWidth + gap) * CARD_SCROLL_COUNT
-
-    viewport.scrollBy({
-      left: direction === 'left' ? -distance : distance,
-      behavior: 'smooth',
-    })
-  }
 
   if (products.length === 0) return null
 
+
+
   return (
+
     <section className={cn('group/row space-y-3', className)}>
+
       <div className="flex items-center justify-between gap-4 px-4">
+
         <h2 className="font-heading text-lg font-semibold sm:text-xl">{title}</h2>
+
         {viewAllHref ? (
+
           <Link
+
             to={viewAllHref}
+
             className="flex items-center gap-0.5 text-sm font-medium text-brand-primary hover:underline"
+
           >
+
             View all
+
             <ChevronRight className="size-4" />
+
           </Link>
+
         ) : null}
+
       </div>
 
-      <div className="relative px-4">
-        {canScrollLeft ? (
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            aria-label="Scroll left"
-            className="absolute top-[calc(50%-1.5rem)] -left-0.5 z-20 hidden size-10 rounded-full border-border bg-white shadow-md transition-opacity sm:flex md:-left-1 md:opacity-0 md:group-hover/row:opacity-100"
-            onClick={() => scrollByCards('left')}
-          >
-            <ChevronLeft className="size-5" />
-          </Button>
-        ) : null}
 
-        {canScrollRight ? (
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            aria-label="Scroll right"
-            className="absolute top-[calc(50%-1.5rem)] -right-0.5 z-20 hidden size-10 rounded-full border-border bg-white shadow-md transition-opacity sm:flex md:-right-1 md:opacity-0 md:group-hover/row:opacity-100"
-            onClick={() => scrollByCards('right')}
-          >
-            <ChevronRight className="size-5" />
-          </Button>
-        ) : null}
 
-        <div
-          ref={viewportRef}
-          className="flex gap-3 overflow-x-auto py-1 scroll-smooth [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+      <div className="px-2 sm:px-3 md:px-4">
+
+        <HorizontalScrollRail
+
+          viewportRef={viewportRef}
+
+          canScrollLeft={canScrollLeft}
+
+          canScrollRight={canScrollRight}
+
+          hasOverflow={hasOverflow}
+
+          onScrollLeft={scrollLeft}
+
+          onScrollRight={scrollRight}
+
+          viewportClassName="flex gap-3 py-1"
+
         >
+
           {products.map((product) => (
+
             <div
+
               key={product._id}
+
               data-product-card
+
               className="w-[200px] shrink-0 sm:w-[220px] md:w-[240px]"
+
             >
+
               <ProductCard
+
                 product={product}
+
                 categoryName={categoryMap[product.categoryId]}
+
                 density="compact"
+
                 className="h-full"
+
               />
+
             </div>
+
           ))}
-        </div>
+
+        </HorizontalScrollRail>
+
       </div>
+
     </section>
+
   )
+
 }
+

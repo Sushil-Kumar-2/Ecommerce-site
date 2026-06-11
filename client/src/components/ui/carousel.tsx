@@ -183,14 +183,18 @@ function CarouselPrevious({
       variant={variant}
       size={size}
       className={cn(
-        "absolute touch-manipulation rounded-full",
+        "absolute z-30 touch-manipulation rounded-full active:!-translate-y-1/2",
         orientation === "horizontal"
           ? "top-1/2 -left-12 -translate-y-1/2"
           : "-top-12 left-1/2 -translate-x-1/2 rotate-90",
         className
       )}
       disabled={!canScrollPrev}
-      onClick={scrollPrev}
+      onClick={(event) => {
+        event.preventDefault()
+        event.stopPropagation()
+        scrollPrev()
+      }}
       {...props}
     >
       <ChevronLeftIcon />
@@ -213,14 +217,18 @@ function CarouselNext({
       variant={variant}
       size={size}
       className={cn(
-        "absolute touch-manipulation rounded-full",
+        "absolute z-30 touch-manipulation rounded-full active:!-translate-y-1/2",
         orientation === "horizontal"
           ? "top-1/2 -right-12 -translate-y-1/2"
           : "-bottom-12 left-1/2 -translate-x-1/2 rotate-90",
         className
       )}
       disabled={!canScrollNext}
-      onClick={scrollNext}
+      onClick={(event) => {
+        event.preventDefault()
+        event.stopPropagation()
+        scrollNext()
+      }}
       {...props}
     >
       <ChevronRightIcon />

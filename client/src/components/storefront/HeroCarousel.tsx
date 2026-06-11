@@ -115,8 +115,8 @@ export function HeroCarousel({ className }: HeroCarouselProps) {
             </CarouselItem>
           ))}
         </CarouselContent>
-        <CarouselPrevious className="left-2 size-8 border-white/30 bg-white/90 text-foreground hover:bg-white sm:left-4 sm:size-9" />
-        <CarouselNext className="right-2 size-8 border-white/30 bg-white/90 text-foreground hover:bg-white sm:right-4 sm:size-9" />
+        <CarouselPrevious className="left-2 z-20 size-8 border-white/30 bg-white/90 text-foreground hover:bg-white active:-translate-y-1/2 sm:left-4 sm:size-9" />
+        <CarouselNext className="right-2 z-20 size-8 border-white/30 bg-white/90 text-foreground hover:bg-white active:-translate-y-1/2 sm:right-4 sm:size-9" />
       </Carousel>
 
       <div className="absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 gap-2">
