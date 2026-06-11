@@ -1,7 +1,9 @@
 import {
   Inject,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
+  UnauthorizedException,
   forwardRef,
 } from '@nestjs/common';
 import Razorpay from 'razorpay';
@@ -66,11 +68,31 @@ export class PaymentsService {
       throw new NotFoundException('Order not found');
     }
 
-    const razorpayOrder = await this.razorpay.orders.create({
-      amount: order.totalAmount * 100,
-      currency: 'INR',
-      receipt: order.orderNumber,
-    });
+    const amountInPaise = Math.round(order.totalAmount * 100);
+
+    if (amountInPaise < 100) {
+      throw new BadRequestException(
+        'Order amount must be at least 100 paise (₹1)',
+      );
+    }
+
+    let razorpayOrder;
+
+    try {
+      razorpayOrder = await this.razorpay.orders.create({
+        amount: amountInPaise,
+        currency: 'INR',
+        receipt: order.orderNumber,
+      });
+    } catch (error: unknown) {
+      const statusCode = (error as { statusCode?: number }).statusCode;
+
+      if (statusCode === 401) {
+        throw new UnauthorizedException('Razorpay authentication failed');
+      }
+
+      throw new InternalServerErrorException('Failed to create Razorpay order');
+    }
     order.razorpayOrderId = razorpayOrder.id;
 
     await order.save();
@@ -119,25 +141,16 @@ export class PaymentsService {
       };
     }
 
-    const isDevelopment =
-      this.configService.get<string>('NODE_ENV') === 'development';
+    const body = dto.razorpayOrderId + '|' + dto.razorpayPaymentId;
+    const expectedSignature = crypto
+      .createHmac(
+        'sha256',
+        this.configService.get<string>('RAZORPAY_KEY_SECRET')!,
+      )
+      .update(body)
+      .digest('hex');
 
-    let isValid = isDevelopment;
-
-    if (!isDevelopment) {
-      const body = dto.razorpayOrderId + '|' + dto.razorpayPaymentId;
-      const expectedSignature = crypto
-        .createHmac(
-          'sha256',
-          this.configService.get<string>('RAZORPAY_KEY_SECRET')!,
-        )
-        .update(body)
-        .digest('hex');
-
-      isValid = expectedSignature === dto.razorpaySignature;
-    }
-
-    if (!isValid) {
+    if (expectedSignature !== dto.razorpaySignature) {
       throw new BadRequestException('Invalid payment signature');
     }
 

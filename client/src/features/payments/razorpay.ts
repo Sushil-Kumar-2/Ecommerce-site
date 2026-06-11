@@ -1,5 +1,6 @@
 import type {
   RazorpayCheckoutOptions,
+  RazorpayFailedResponse,
   RazorpaySuccessResponse,
 } from './payment.types'
 
@@ -47,6 +48,13 @@ export async function openRazorpayCheckout(
           reject(new Error('Payment cancelled'))
         },
       },
+    })
+
+    checkout.on('payment.failed', (response: unknown) => {
+      const failed = response as RazorpayFailedResponse
+      const description =
+        failed.error?.description ?? 'Payment failed. Please try again.'
+      reject(new Error(description))
     })
 
     checkout.open()

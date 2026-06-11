@@ -1,5 +1,6 @@
 interface RazorpayInstance {
   open: () => void
+  on: (event: string, callback: (response: unknown) => void) => void
 }
 
 interface RazorpayConstructor {

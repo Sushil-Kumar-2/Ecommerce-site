@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString } from 'class-validator';
+import { IsNotEmpty, IsString } from 'class-validator';
 
 export class VerifyPaymentDto {
   @ApiProperty({
@@ -7,6 +7,7 @@ export class VerifyPaymentDto {
     example: '507f1f77bcf86cd799439011',
   })
   @IsString()
+  @IsNotEmpty()
   orderId: string;
 
   @ApiProperty({
@@ -14,6 +15,7 @@ export class VerifyPaymentDto {
     example: 'order_MNopQrStUvWxYz',
   })
   @IsString()
+  @IsNotEmpty()
   razorpayOrderId: string;
 
   @ApiProperty({
@@ -21,6 +23,7 @@ export class VerifyPaymentDto {
     example: 'pay_MNopQrStUvWxYz',
   })
   @IsString()
+  @IsNotEmpty()
   razorpayPaymentId: string;
 
   @ApiProperty({
@@ -28,5 +31,6 @@ export class VerifyPaymentDto {
     example: 'a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6',
   })
   @IsString()
+  @IsNotEmpty()
   razorpaySignature: string;
 }

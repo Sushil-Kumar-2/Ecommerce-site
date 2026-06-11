@@ -46,3 +46,11 @@ export interface RazorpaySuccessResponse {
   razorpay_order_id: string
   razorpay_signature: string
 }
+
+export interface RazorpayFailedResponse {
+  error?: {
+    code?: string
+    description?: string
+    reason?: string
+  }
+}

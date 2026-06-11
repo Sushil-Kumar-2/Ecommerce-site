@@ -42,13 +42,18 @@ export function useRazorpayPayment() {
       toast.success(result.message)
       return result
     } catch (error) {
-      try {
-        await markPaymentFailed(orderId).unwrap()
-      } catch {
-        // ignore secondary failure
+      const isCancelled =
+        error instanceof Error && error.message === 'Payment cancelled'
+
+      if (!isCancelled) {
+        try {
+          await markPaymentFailed(orderId).unwrap()
+        } catch {
+          // ignore secondary failure
+        }
       }
 
-      if (error instanceof Error && error.message === 'Payment cancelled') {
+      if (isCancelled) {
         toast.error('Payment cancelled')
       } else {
         toast.error(getApiErrorMessage(error, 'Payment failed.'))
