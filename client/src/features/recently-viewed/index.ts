@@ -2,5 +2,10 @@ export {
   recentlyViewedApi,
   useGetRecentlyViewedQuery,
 } from './recentlyViewedApi'
-export { useRecentlyViewed } from './hooks'
+export {
+  MAX_RECENTLY_VIEWED_ITEMS,
+  MIN_RECENTLY_VIEWED_TO_SHOW,
+  useHomeRecentlyViewed,
+  useRecentlyViewed,
+} from './hooks'
 export type { RecentlyViewedItem } from './recentlyViewedApi'

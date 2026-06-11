@@ -1,4 +1,7 @@
 export { AccountLayout } from './AccountLayout'
+export { BackToTop } from './BackToTop'
+export { HomeCategoryCard } from './HomeCategoryCard'
+export { ProductImageStrip } from './ProductImageStrip'
 export { CategoryNav } from './CategoryNav'
 export { DiscountBadge } from './DiscountBadge'
 export { GlobalSearch } from './GlobalSearch'

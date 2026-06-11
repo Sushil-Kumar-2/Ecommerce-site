@@ -60,8 +60,9 @@ export const productsApi = baseApi.injectEndpoints({
       query: (id) => `/products/${id}/related`,
       providesTags: (_result, _error, id) => [{ type: 'Product', id: `RELATED_${id}` }],
     }),
-    getCategories: builder.query<Category[], void>({
-      query: () => '/categories',
+    getCategories: builder.query<Category[], boolean | void>({
+      query: (includeAll) =>
+        `/categories${includeAll ? '?includeAll=true' : ''}`,
       providesTags: ['Category'],
     }),
   }),

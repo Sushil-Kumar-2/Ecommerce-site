@@ -61,10 +61,23 @@ export function useCategories() {
   return useGetCategoriesQuery()
 }
 
+/** All active categories (incl. subcategories) for homepage department grids. */
+export function useHomeCategories() {
+  return useGetCategoriesQuery(true)
+}
+
 export function useFeaturedProducts() {
   return useGetProductsQuery({
     featured: 'true',
     limit: '12',
+    page: '1',
+  })
+}
+
+/** All approved products for homepage category grids (needs 4+ per category). */
+export function useHomeCategoryProducts() {
+  return useGetProductsQuery({
+    limit: '100',
     page: '1',
   })
 }

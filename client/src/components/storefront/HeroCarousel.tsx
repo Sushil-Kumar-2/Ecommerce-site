@@ -74,19 +74,19 @@ export function HeroCarousel({ className }: HeroCarouselProps) {
   }, [api, onSelect])
 
   return (
-    <div className={cn('mx-auto w-full max-w-7xl px-4', className)}>
+    <div className={cn('relative w-full', className)}>
       <Carousel
         setApi={setApi}
         className="w-full"
         opts={{ loop: true }}
         plugins={prefersReducedMotion ? [] : [autoplayPlugin]}
       >
-        <CarouselContent>
+        <CarouselContent className="-ml-0">
           {slides.map((slide) => (
-            <CarouselItem key={slide.id}>
+            <CarouselItem key={slide.id} className="pl-0">
               <Link
                 to={slide.href}
-                className="group relative block min-h-[180px] overflow-hidden rounded-xl shadow-md transition-shadow hover:shadow-lg sm:min-h-[220px]"
+                className="group relative block min-h-[200px] overflow-hidden sm:min-h-[260px] md:min-h-[320px]"
               >
                 <img
                   src={slide.image}
@@ -102,7 +102,7 @@ export function HeroCarousel({ className }: HeroCarouselProps) {
                   )}
                   aria-hidden
                 />
-                <div className="relative z-10 flex min-h-[180px] flex-col justify-center p-6 text-white sm:min-h-[220px] sm:p-10">
+                <div className="relative z-10 flex min-h-[200px] flex-col justify-center p-6 text-white sm:min-h-[260px] sm:p-10 md:min-h-[320px]">
                   <h2 className="font-heading text-2xl font-bold sm:text-3xl">{slide.title}</h2>
                   <p className="mt-2 max-w-lg text-sm text-white/90 sm:text-base">
                     {slide.subtitle}
@@ -115,11 +115,11 @@ export function HeroCarousel({ className }: HeroCarouselProps) {
             </CarouselItem>
           ))}
         </CarouselContent>
-        <CarouselPrevious className="left-2 size-8 border-white/30 bg-white/90 text-foreground hover:bg-white sm:left-6 sm:size-9" />
-        <CarouselNext className="right-2 size-8 border-white/30 bg-white/90 text-foreground hover:bg-white sm:right-6 sm:size-9" />
+        <CarouselPrevious className="left-2 size-8 border-white/30 bg-white/90 text-foreground hover:bg-white sm:left-4 sm:size-9" />
+        <CarouselNext className="right-2 size-8 border-white/30 bg-white/90 text-foreground hover:bg-white sm:right-4 sm:size-9" />
       </Carousel>
 
-      <div className="mt-3 flex justify-center gap-2">
+      <div className="absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 gap-2">
         {slides.map((slide, index) => (
           <button
             key={slide.id}

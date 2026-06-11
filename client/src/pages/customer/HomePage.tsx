@@ -1,19 +1,24 @@
 import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowRight, Grid3X3 } from 'lucide-react'
 
 import { SectionError } from '@/components/common/SectionError'
-import { HeroCarousel, ProductRow } from '@/components/storefront'
-import { Button } from '@/components/ui/button'
+import {
+  BackToTop,
+  HeroCarousel,
+  HomeCategoryCard,
+  ProductImageStrip,
+  ProductRow,
+} from '@/components/storefront'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useRecentlyViewed } from '@/features/recently-viewed'
+import { useHomeRecentlyViewed } from '@/features/recently-viewed'
 import {
   useBestSellers,
-  useCategories,
   useFeaturedProducts,
+  useHomeCategories,
+  useHomeCategoryProducts,
   useTopRatedProducts,
 } from '@/features/products/hooks'
-import type { Product } from '@/features/products/product.types'
+import type { Category, Product } from '@/features/products/product.types'
 import { buildCategoryMap } from '@/features/products/utils'
 import { ROUTES } from '@/utils/routes'
 
@@ -48,177 +53,188 @@ function mapRecentlyViewedToProducts(
   }))
 }
 
+function productsForCategory(products: Product[], categoryId: string, limit = 4) {
+  return products.filter((product) => product.categoryId === categoryId).slice(0, limit)
+}
+
+function isActiveCategory(category: Category) {
+  return category.isActive !== false && category.status !== 'inactive'
+}
+
+function buildCategoryCards(categories: Category[], products: Product[]) {
+  return categories
+    .filter(isActiveCategory)
+    .map((category) => ({
+      category,
+      products: productsForCategory(products, category._id),
+    }))
+    .filter((entry) => entry.products.length >= 4)
+    .slice(0, 8)
+}
+
 export function HomePage() {
   const {
     data: categories = [],
     isLoading: isCategoriesLoading,
     error: categoriesError,
     refetch: refetchCategories,
-  } = useCategories()
+  } = useHomeCategories()
   const {
     data: bestSellers = [],
-    isLoading: isBestSellersLoading,
     error: bestSellersError,
     refetch: refetchBestSellers,
   } = useBestSellers()
   const {
     data: featuredData,
-    isLoading: isFeaturedLoading,
     error: featuredError,
     refetch: refetchFeatured,
   } = useFeaturedProducts()
   const {
     data: topRated = [],
-    isLoading: isTopRatedLoading,
     error: topRatedError,
     refetch: refetchTopRated,
   } = useTopRatedProducts()
-  const { data: recentlyViewed = [] } = useRecentlyViewed()
+  const {
+    items: recentlyViewed,
+    showOnHomepage: showRecentlyViewed,
+  } = useHomeRecentlyViewed()
+  const {
+    data: homeCatalogData,
+    isLoading: isHomeCatalogLoading,
+    error: homeCatalogError,
+    refetch: refetchHomeCatalog,
+  } = useHomeCategoryProducts()
 
   const featuredProducts = featuredData?.data ?? []
   const recentProducts = mapRecentlyViewedToProducts(recentlyViewed)
   const categoryMap = useMemo(() => buildCategoryMap(categories), [categories])
+  const allProducts = homeCatalogData?.data ?? []
+
+  const categoryCards = useMemo(
+    () => buildCategoryCards(categories, allProducts),
+    [categories, allProducts],
+  )
+
+  const isCatalogLoading =
+    isCategoriesLoading || isHomeCatalogLoading
+
+  const rowOne = categoryCards.slice(0, 4)
+  const rowTwo = categoryCards.slice(4, 8)
 
   return (
-    <div className="space-y-8 pb-10">
+    <div className="bg-muted/40 pb-10">
       <HeroCarousel />
 
-      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="font-heading text-lg font-semibold">Shop by category</h2>
-          <Button variant="ghost" size="sm" asChild>
-            <Link to={ROUTES.products}>
-              View all
-              <ArrowRight className="size-4" />
-            </Link>
-          </Button>
-        </div>
-        {isCategoriesLoading ? (
-          <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <Skeleton key={i} className="aspect-square rounded-xl" />
+      <div className="relative z-10 mx-auto max-w-7xl space-y-5 px-3 pt-4 sm:px-4 md:-mt-10 md:space-y-6 md:pt-0">
+        {isCatalogLoading ? (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {Array.from({ length: 4 }).map((_, index) => (
+              <Skeleton key={index} className="h-80 rounded-sm" />
             ))}
           </div>
-        ) : categoriesError ? (
+        ) : categoriesError || homeCatalogError ? (
           <SectionError
-            message="Failed to load categories."
-            onRetry={() => void refetchCategories()}
+            message="Failed to load homepage products."
+            onRetry={() => {
+              void refetchCategories()
+              void refetchHomeCatalog()
+            }}
           />
-        ) : categories.length === 0 ? (
-          <p className="text-center text-sm text-muted-foreground">No categories available.</p>
-        ) : (
-          <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8">
-            {categories.slice(0, 8).map((category) => (
-              <Link
+        ) : rowOne.length > 0 ? (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {rowOne.map(({ category, products }) => (
+              <HomeCategoryCard
                 key={category._id}
-                to={`${ROUTES.products}?categoryId=${category._id}`}
-                className="flex flex-col items-center gap-2 rounded-xl border bg-card p-3 text-center transition-shadow hover:shadow-md"
-              >
-                <div className="flex size-14 items-center justify-center rounded-full bg-brand-primary/10">
-                  {category.image ? (
-                    <img
-                      src={category.image}
-                      alt={category.name}
-                      className="size-10 rounded-full object-cover"
-                    />
-                  ) : (
-                    <Grid3X3 className="size-6 text-brand-primary" />
-                  )}
-                </div>
-                <span className="line-clamp-2 text-xs font-medium">{category.name}</span>
-              </Link>
+                title={`${category.name} | Top picks`}
+                href={`${ROUTES.products}?categoryId=${category._id}`}
+                products={products}
+                category={category}
+              />
             ))}
           </div>
-        )}
-      </section>
+        ) : null}
 
-      {isBestSellersLoading ? (
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <Skeleton className="h-64 w-full rounded-xl" />
-        </div>
-      ) : bestSellersError ? (
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        {bestSellersError ? (
           <SectionError
             message="Failed to load best sellers."
             onRetry={() => void refetchBestSellers()}
           />
-        </div>
-      ) : bestSellers.length > 0 ? (
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <ProductRow
-            title="Best sellers"
+        ) : bestSellers.length > 0 ? (
+          <ProductImageStrip
+            title="Best sellers in store"
             products={bestSellers}
-            categoryMap={categoryMap}
             viewAllHref={ROUTES.products}
           />
-        </div>
-      ) : null}
+        ) : null}
 
-      {isFeaturedLoading ? (
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <Skeleton className="h-64 w-full rounded-xl" />
-        </div>
-      ) : featuredError ? (
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        {showRecentlyViewed ? (
+          <ProductImageStrip
+            title="Inspired by your browsing history"
+            products={recentProducts}
+          />
+        ) : null}
+
+        {rowTwo.length > 0 ? (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {rowTwo.map(({ category, products }) => (
+              <HomeCategoryCard
+                key={category._id}
+                title={`Deals on ${category.name}`}
+                href={`${ROUTES.products}?categoryId=${category._id}`}
+                products={products}
+                category={category}
+              />
+            ))}
+          </div>
+        ) : null}
+
+        {featuredError ? (
           <SectionError
             message="Failed to load featured deals."
             onRetry={() => void refetchFeatured()}
           />
-        </div>
-      ) : featuredProducts.length > 0 ? (
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <ProductRow
-            title="Featured deals"
-            products={featuredProducts}
-            categoryMap={categoryMap}
-            viewAllHref={`${ROUTES.products}?featured=true`}
-          />
-        </div>
-      ) : null}
+        ) : featuredProducts.length > 0 ? (
+          <div className="rounded-sm bg-card p-4 shadow-sm ring-1 ring-border/40">
+            <ProductRow
+              title="Featured deals"
+              products={featuredProducts}
+              categoryMap={categoryMap}
+              viewAllHref={`${ROUTES.products}?featured=true`}
+              className="[&>div:first-child]:px-0 [&_.relative]:px-0"
+            />
+          </div>
+        ) : null}
 
-      {isTopRatedLoading ? (
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <Skeleton className="h-64 w-full rounded-xl" />
-        </div>
-      ) : topRatedError ? (
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        {topRatedError ? (
           <SectionError
             message="Failed to load top rated products."
             onRetry={() => void refetchTopRated()}
           />
-        </div>
-      ) : topRated.length > 0 ? (
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <ProductRow
-            title="Top rated"
+        ) : topRated.length > 0 ? (
+          <ProductImageStrip
+            title="Top rated for you"
             products={topRated}
-            categoryMap={categoryMap}
             viewAllHref={`${ROUTES.products}?sort=top_rated`}
           />
-        </div>
-      ) : null}
+        ) : null}
 
-      {recentProducts.length > 0 ? (
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <ProductRow
-            title="Recently viewed"
-            products={recentProducts}
-            categoryMap={categoryMap}
-          />
-        </div>
-      ) : null}
-
-      <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="rounded-xl bg-brand-primary p-8 text-center text-white">
-          <h2 className="font-heading text-2xl font-bold">Explore thousands of products</h2>
-          <p className="mt-2 text-white/80">
-            Great prices, fast delivery, and secure checkout.
+        <section className="rounded-sm bg-card p-6 text-center shadow-sm ring-1 ring-border/40 sm:p-8">
+          <h2 className="font-heading text-xl font-bold sm:text-2xl">
+            Explore thousands of products
+          </h2>
+          <p className="mt-2 text-sm text-muted-foreground sm:text-base">
+            Great prices, fast delivery, and secure checkout on ShopKart.
           </p>
-          <Button asChild className="mt-4 bg-brand-accent text-foreground hover:bg-brand-accent/90">
-            <Link to={ROUTES.products}>Start shopping</Link>
-          </Button>
-        </div>
-      </section>
+          <Link
+            to={ROUTES.products}
+            className="mt-4 inline-flex rounded-sm bg-brand-accent px-6 py-2.5 text-sm font-semibold text-foreground transition-colors hover:bg-brand-accent/90"
+          >
+            Start shopping
+          </Link>
+        </section>
+      </div>
+
+      <BackToTop />
     </div>
   )
 }

@@ -14,6 +14,7 @@ export {
   useTopRatedProducts,
   useBestSellers,
   useCategories,
+  useHomeCategories,
   useProductFiltersFromUrl,
   useProductFilterUpdater,
 } from './hooks'
