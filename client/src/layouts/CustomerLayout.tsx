@@ -18,7 +18,7 @@ export function CustomerLayout() {
           <Outlet />
         </PageTransition>
       </main>
-      <StorefrontFooter />
+      <div className="hidden md:block"><StorefrontFooter /></div>
       <MobileBottomNav />
     </div>
   )

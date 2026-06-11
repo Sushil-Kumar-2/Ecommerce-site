@@ -223,7 +223,7 @@ function ProductListingCardComponent({
           ) : null}
         </div>
 
-        <div className="flex flex-1 flex-col p-4">
+        <div className="flex flex-1 flex-col p-2.5 sm:p-4">
           <div className="flex flex-1 flex-col gap-1.5">
             {categoryName ? (
               <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -257,7 +257,7 @@ function ProductListingCardComponent({
               )}
 
               <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-                <span className="text-lg font-bold tracking-tight text-foreground">
+                <span className="text-base font-bold tracking-tight text-foreground sm:text-lg">
                   {formatPrice(effectivePrice)}
                 </span>
                 {hasDiscount ? (

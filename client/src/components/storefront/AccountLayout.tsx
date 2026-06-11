@@ -22,12 +22,12 @@ const navItems = [
 
 export function AccountLayout() {
   return (
-    <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-6 md:flex-row md:items-start">
+    <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-4 py-4 md:flex-row md:items-start md:gap-6 md:py-6">
       <aside className="w-full shrink-0 md:w-56">
         <p className="mb-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">
           My account
         </p>
-        <nav className="flex flex-row gap-1 overflow-x-auto pb-1 md:flex-col md:overflow-visible md:pb-0">
+        <nav className="flex snap-x snap-mandatory flex-row gap-2 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] md:flex-col md:overflow-visible md:pb-0 [&::-webkit-scrollbar]:hidden">
           {navItems.map(({ to, label, icon: Icon }) => (
             <NavLink
               key={to}
@@ -35,10 +35,10 @@ export function AccountLayout() {
               end={to === ROUTES.account}
               className={({ isActive }) =>
                 cn(
-                  'flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors',
+                  'flex shrink-0 snap-start items-center gap-2 rounded-full border px-4 py-2 text-sm whitespace-nowrap transition-colors',
                   isActive
-                    ? 'bg-brand-primary text-white'
-                    : 'text-muted-foreground hover:bg-muted hover:text-foreground',
+                    ? 'border-brand-primary bg-brand-primary text-white'
+                    : 'border-border/60 bg-card text-muted-foreground hover:bg-muted hover:text-foreground',
                 )
               }
             >

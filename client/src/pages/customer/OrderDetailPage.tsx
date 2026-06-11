@@ -175,7 +175,7 @@ export function OrderDetailPage() {
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
+      <div className="grid gap-4 pb-4 lg:grid-cols-[1fr_320px] lg:gap-6 lg:pb-0">
         <div className="space-y-6">
           <Card>
             <CardHeader>

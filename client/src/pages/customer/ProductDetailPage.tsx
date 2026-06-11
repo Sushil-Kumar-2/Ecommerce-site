@@ -6,7 +6,7 @@ import { toast } from 'sonner'
 import { EmptyState } from '@/components/common/EmptyState'
 import { ErrorState } from '@/components/common/ErrorState'
 import { PageShell, RatingStars, StatusBadge } from '@/components/design-system'
-import { PriceBlock, StickyMobileCTA, TrustBadges } from '@/components/storefront'
+import { PriceBlock, ProductRow, TrustBadges } from '@/components/storefront'
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -26,7 +26,6 @@ import {
 } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { ProductCard } from '@/features/products/components/ProductCard'
 import { ProductCardSkeleton } from '@/features/products/components/ProductCardSkeleton'
 import {
   useCategories,
@@ -89,7 +88,7 @@ export function ProductDetailPage() {
 
   if (isLoading) {
     return (
-      <PageShell className="pb-24 md:pb-8">
+      <PageShell className="pb-6 md:pb-8">
         <div className="mb-6 space-y-2">
           <Skeleton className="h-3 w-48" />
         </div>
@@ -215,7 +214,7 @@ export function ProductDetailPage() {
   }
 
   return (
-    <PageShell className="pb-24 md:pb-10">
+    <PageShell className="pb-6 md:pb-10">
       <Breadcrumb className="mb-6 text-xs text-muted-foreground">
         <BreadcrumbList>
           <BreadcrumbItem>
@@ -529,62 +528,29 @@ export function ProductDetailPage() {
 
       {relatedProducts.length > 0 || isRelatedLoading ? (
         <section className="mt-14 border-t border-border/60 pt-10">
-          <div className="mb-6 flex items-center justify-between gap-4">
-            <h2 className="font-heading text-xl font-bold tracking-tight sm:text-2xl">
-              Related products
-            </h2>
-            <Link
-              to={ROUTES.products}
-              className="text-sm font-medium text-brand-primary transition-colors hover:underline"
-            >
-              View all
-            </Link>
-          </div>
-
           {isRelatedLoading ? (
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3">
-              {Array.from({ length: 3 }).map((_, index) => (
-                <ProductCardSkeleton key={index} />
+            <div className="space-y-3">
+              <h2 className="px-4 font-heading text-lg font-semibold sm:text-xl">Related products</h2>
+              <div className="flex gap-3 overflow-x-auto px-4 py-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {Array.from({ length: 4 }).map((_, index) => (
+                <div key={index} className="w-[200px] shrink-0 sm:w-[220px]">
+                  <ProductCardSkeleton className="min-h-[320px]" />
+                </div>
               ))}
+              </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3">
-              {relatedProducts.map((related) => (
-                <ProductCard
-                  key={related._id}
-                  product={related}
-                  categoryName={categoryMap[related.categoryId]}
-                  className="h-full"
-                />
-              ))}
-            </div>
+            <ProductRow
+              title="Related products"
+              products={relatedProducts}
+              categoryMap={categoryMap}
+              viewAllHref={ROUTES.products}
+              className="-mx-4 sm:-mx-6"
+            />
           )}
         </section>
       ) : null}
 
-      <StickyMobileCTA>
-        <div className="flex items-center gap-3">
-          <Button
-            type="button"
-            variant="outline"
-            className="flex-1 border-2"
-            disabled={!stock.inStock || isAddingToCart}
-            onClick={() => void handleAddToCart()}
-          >
-            {isAddingToCart ? <Loader2 className="animate-spin" /> : <ShoppingCart />}
-            Add to Cart
-          </Button>
-          <Button
-            type="button"
-            className="flex-1 bg-foreground text-background hover:bg-foreground/90"
-            disabled={!stock.inStock || isAddingToCart}
-            onClick={() => void handleBuyNow()}
-          >
-            <Zap />
-            Buy Now
-          </Button>
-        </div>
-      </StickyMobileCTA>
     </PageShell>
   )
 }

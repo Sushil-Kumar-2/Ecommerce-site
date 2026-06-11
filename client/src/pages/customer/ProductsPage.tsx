@@ -1,10 +1,8 @@
-import { SlidersHorizontal } from 'lucide-react'
 import { motion, useReducedMotion } from 'framer-motion'
 import { useMemo, useState } from 'react'
 
 import { ErrorState } from '@/components/common/ErrorState'
 import { PageShell } from '@/components/design-system'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
   Sheet,
@@ -134,7 +132,12 @@ export function ProductsPage() {
   return (
     <PageShell className="pt-4 sm:pt-5">
       <PageContent {...pageMotionProps}>
-        <ProductsPageHeader countLabel={countLabel} breadcrumbs={breadcrumbs} />
+        <ProductsPageHeader
+          countLabel={countLabel}
+          breadcrumbs={breadcrumbs}
+          activeFilterCount={activeFilterCount}
+          onOpenFilters={() => setFiltersOpen(true)}
+        />
 
         {error ? (
           <ErrorState
@@ -152,7 +155,7 @@ export function ProductsPage() {
               <ProductFiltersPanel {...filterProps} />
             </div>
 
-            <div className="space-y-4 pb-20 lg:pb-0">
+            <div className="space-y-4 pb-4 lg:pb-0">
               <ProductFilterChips
                 search={filters.search}
                 categoryId={filters.categoryId}
@@ -207,25 +210,8 @@ export function ProductsPage() {
         ) : null}
       </PageContent>
 
-      <div className="fixed right-0 bottom-16 left-0 z-40 border-t bg-background/95 p-3 shadow-lg backdrop-blur supports-backdrop-filter:bg-background/80 lg:hidden">
-        <Button
-          type="button"
-          variant="outline"
-          className="relative mx-auto w-full max-w-lg"
-          onClick={() => setFiltersOpen(true)}
-        >
-          <SlidersHorizontal className="size-4" />
-          Filters &amp; Search
-          {activeFilterCount > 0 ? (
-            <Badge className="absolute -top-2 -right-2 size-5 rounded-full p-0 text-[10px]">
-              {activeFilterCount}
-            </Badge>
-          ) : null}
-        </Button>
-      </div>
-
       <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
-        <SheetContent side="left" className="flex w-full max-w-sm flex-col p-0">
+        <SheetContent side="bottom" className="flex h-[85vh] max-h-[85vh] flex-col rounded-t-2xl p-0">
           <SheetHeader className="border-b px-6 py-4">
             <SheetTitle>Filters</SheetTitle>
           </SheetHeader>

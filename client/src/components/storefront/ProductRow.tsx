@@ -90,7 +90,7 @@ export function ProductRow({
             variant="outline"
             size="icon"
             aria-label="Scroll left"
-            className="absolute top-[calc(50%-1.5rem)] -left-0.5 z-20 size-10 rounded-full border-border bg-white shadow-md opacity-100 transition-opacity md:-left-1 md:opacity-0 md:group-hover/row:opacity-100"
+            className="absolute top-[calc(50%-1.5rem)] -left-0.5 z-20 hidden size-10 rounded-full border-border bg-white shadow-md transition-opacity sm:flex md:-left-1 md:opacity-0 md:group-hover/row:opacity-100"
             onClick={() => scrollByCards('left')}
           >
             <ChevronLeft className="size-5" />
@@ -103,7 +103,7 @@ export function ProductRow({
             variant="outline"
             size="icon"
             aria-label="Scroll right"
-            className="absolute top-[calc(50%-1.5rem)] -right-0.5 z-20 size-10 rounded-full border-border bg-white shadow-md opacity-100 transition-opacity md:-right-1 md:opacity-0 md:group-hover/row:opacity-100"
+            className="absolute top-[calc(50%-1.5rem)] -right-0.5 z-20 hidden size-10 rounded-full border-border bg-white shadow-md transition-opacity sm:flex md:-right-1 md:opacity-0 md:group-hover/row:opacity-100"
             onClick={() => scrollByCards('right')}
           >
             <ChevronRight className="size-5" />
