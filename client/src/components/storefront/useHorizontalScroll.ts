@@ -61,8 +61,7 @@ export function useHorizontalScroll(
     )
   }, [])
 
-  const trackScrollAnimation = useCallback(
-    (viewport: HTMLDivElement) => {
+  const trackScrollAnimation = useCallback(() => {
       if (scrollAnimationRef.current !== null) {
         cancelAnimationFrame(scrollAnimationRef.current)
       }
@@ -80,9 +79,7 @@ export function useHorizontalScroll(
       }
 
       scrollAnimationRef.current = requestAnimationFrame(tick)
-    },
-    [updateScrollState],
-  )
+  }, [updateScrollState])
 
   useEffect(() => {
     const viewport = viewportRef.current
@@ -177,7 +174,7 @@ export function useHorizontalScroll(
         setCanScrollRight,
       )
 
-      trackScrollAnimation(viewport)
+      trackScrollAnimation()
     },
     [cardSelector, cardScrollCount, gap, trackScrollAnimation],
   )
