@@ -1,5 +1,5 @@
 import { Loader2 } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
 import { ErrorState } from '@/components/common/ErrorState'
@@ -23,7 +23,7 @@ import {
   type ApplyCouponResponse,
 } from '@/features/checkout'
 import { useAuth } from '@/features/auth'
-import { useRazorpayPayment } from '@/features/payments'
+import { preloadRazorpayScript, useRazorpayPayment } from '@/features/payments'
 import { formatPrice } from '@/features/products/utils'
 import { getApiErrorMessage } from '@/utils/api-error'
 import { ROUTES } from '@/utils/routes'
@@ -109,6 +109,12 @@ export function CheckoutPage() {
   const [applyCoupon, { isLoading: isApplyingCoupon }] = useApplyCoupon()
   const [placeOrder, { isLoading: isPlacingOrder }] = usePlaceOrder()
   const { pay: payWithRazorpay, isLoading: isPaying } = useRazorpayPayment()
+
+  useEffect(() => {
+    if (paymentMethod === PaymentMethod.RAZORPAY) {
+      void preloadRazorpayScript()
+    }
+  }, [paymentMethod])
 
   const cartTotal = preview?.cart?.totalAmount ?? 0
   const discount = appliedCoupon?.discount ?? 0

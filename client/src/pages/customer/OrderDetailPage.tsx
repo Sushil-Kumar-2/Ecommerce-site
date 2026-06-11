@@ -1,5 +1,5 @@
 import { ArrowLeft, Loader2 } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 
 import { ErrorState } from '@/components/common/ErrorState'
@@ -39,7 +39,7 @@ import {
   useOrderDetail,
 } from '@/features/orders'
 import { useAuth } from '@/features/auth'
-import { useRazorpayPayment } from '@/features/payments'
+import { preloadRazorpayScript, useRazorpayPayment } from '@/features/payments'
 import { formatPrice } from '@/features/products/utils'
 import { getApiErrorMessage } from '@/utils/api-error'
 import { ROUTES } from '@/utils/routes'
@@ -65,6 +65,12 @@ export function OrderDetailPage() {
   const [showReturnDialog, setShowReturnDialog] = useState(false)
   const [cancelReason, setCancelReason] = useState('')
 
+  useEffect(() => {
+    if (order && canRetryPayment(order)) {
+      void preloadRazorpayScript()
+    }
+  }, [order])
+
   const handleRetryPayment = async () => {
     if (!order) return
 
@@ -80,6 +86,7 @@ export function OrderDetailPage() {
     if (!id || cancelReason.trim().length < 3) return
     try {
       await cancelOrder(id, cancelReason.trim())
+      await refetch()
       setShowCancelDialog(false)
       setCancelReason('')
     } catch {
@@ -123,6 +130,20 @@ export function OrderDetailPage() {
           Back to orders
         </Link>
       </Button>
+
+      {order.orderStatus === 'cancelled' ? (
+        <Alert className="mb-6">
+          <AlertTitle>Order cancelled</AlertTitle>
+          <AlertDescription>
+            {order.cancelReason ? `Reason: ${order.cancelReason}. ` : null}
+            {order.paymentStatus === 'refunded'
+              ? 'Your refund has been initiated and should reflect in your account within 5–7 business days.'
+              : order.paymentStatus === 'paid'
+                ? 'Refund is being processed. You will be notified once it is complete.'
+                : 'This order has been cancelled.'}
+          </AlertDescription>
+        </Alert>
+      ) : null}
 
       {order.paymentStatus === 'failed' ? (
         <Alert variant="destructive" className="mb-6">

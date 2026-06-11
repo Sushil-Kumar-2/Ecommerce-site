@@ -8,6 +8,10 @@ const RAZORPAY_SCRIPT_URL = 'https://checkout.razorpay.com/v1/checkout.js'
 
 let scriptPromise: Promise<void> | null = null
 
+export function preloadRazorpayScript(): Promise<void> {
+  return loadRazorpayScript()
+}
+
 function loadRazorpayScript(): Promise<void> {
   if (window.Razorpay) {
     return Promise.resolve()

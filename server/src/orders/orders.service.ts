@@ -561,7 +561,7 @@ export class OrdersService {
       { returnDocument: 'after' },
     );
 
-    const result = completed ?? order;
+    let result = completed ?? order;
 
     if (wasJustCancelled) {
       await this.notificationEvents.notifyOrderCancelled(
@@ -584,6 +584,24 @@ export class OrdersService {
             customerId: result.userId,
           },
         });
+      }
+
+      if (
+        result.paymentMethod === PaymentMethod.RAZORPAY &&
+        result.paymentStatus === PaymentStatus.PAID &&
+        result.paymentId
+      ) {
+        try {
+          result = await this.paymentsService.refundPaidOrder(
+            result._id.toString(),
+          );
+        } catch {
+          await this.notificationEvents.notifyRefundInitiated(
+            result.userId,
+            result._id.toString(),
+            result.orderNumber,
+          );
+        }
       }
     }
 

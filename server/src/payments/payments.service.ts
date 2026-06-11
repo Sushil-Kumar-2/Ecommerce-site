@@ -198,6 +198,74 @@ export class PaymentsService {
     };
   }
 
+  async refundPaidOrder(orderId: string): Promise<OrderDocument> {
+    const order = await this.orderModel.findById(orderId);
+
+    if (!order) {
+      throw new NotFoundException('Order not found');
+    }
+
+    if (order.paymentStatus === PaymentStatus.REFUNDED) {
+      return order;
+    }
+
+    if (order.paymentStatus !== PaymentStatus.PAID) {
+      throw new BadRequestException('Only paid orders can be refunded');
+    }
+
+    if (order.paymentMethod !== PaymentMethod.RAZORPAY) {
+      throw new BadRequestException('Only Razorpay payments support automatic refund');
+    }
+
+    if (!order.paymentId) {
+      throw new BadRequestException('Payment ID not found for refund');
+    }
+
+    const amountInPaise = Math.round(order.totalAmount * 100);
+
+    try {
+      await this.razorpay.payments.refund(order.paymentId, {
+        amount: amountInPaise,
+        notes: {
+          orderId: order._id.toString(),
+          orderNumber: order.orderNumber,
+          reason: 'order_cancelled',
+        },
+      });
+    } catch (error: unknown) {
+      const statusCode = (error as { statusCode?: number }).statusCode;
+
+      if (statusCode === 401) {
+        throw new UnauthorizedException('Razorpay authentication failed');
+      }
+
+      throw new InternalServerErrorException('Failed to process refund');
+    }
+
+    order.paymentStatus = PaymentStatus.REFUNDED;
+    await order.save();
+
+    await this.paymentModel.findOneAndUpdate(
+      { orderId: order._id.toString() },
+      { status: PaymentStatus.REFUNDED },
+    );
+
+    await this.notificationEvents.notifyRefundInitiated(
+      order.userId,
+      order._id.toString(),
+      order.orderNumber,
+    );
+
+    await this.notificationEvents.notifyRefundCompleted(
+      order.userId,
+      order._id.toString(),
+      order.orderNumber,
+      order.totalAmount,
+    );
+
+    return order;
+  }
+
   async markPaymentFailed(orderId: string) {
     await this.paymentModel.findOneAndUpdate(
       { orderId },

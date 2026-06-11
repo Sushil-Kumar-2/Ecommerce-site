@@ -7,7 +7,7 @@ import {
   useMarkPaymentFailedMutation,
   useVerifyPaymentMutation,
 } from './paymentsApi'
-import { openRazorpayCheckout } from './razorpay'
+import { openRazorpayCheckout, preloadRazorpayScript } from './razorpay'
 
 export function useRazorpayPayment() {
   const [createRazorpayOrder, { isLoading: isCreating }] =
@@ -17,8 +17,13 @@ export function useRazorpayPayment() {
     useMarkPaymentFailedMutation()
 
   const pay = async (orderId: string, userEmail?: string) => {
+    const loadingToast = toast.loading('Opening payment gateway...')
+
     try {
+      await preloadRazorpayScript()
       const razorpayOrder = await createRazorpayOrder(orderId).unwrap()
+
+      toast.dismiss(loadingToast)
 
       const response = await openRazorpayCheckout({
         key: razorpayOrder.key,
@@ -42,6 +47,8 @@ export function useRazorpayPayment() {
       toast.success(result.message)
       return result
     } catch (error) {
+      toast.dismiss(loadingToast)
+
       const isCancelled =
         error instanceof Error && error.message === 'Payment cancelled'
 

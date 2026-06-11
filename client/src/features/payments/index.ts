@@ -5,7 +5,7 @@ export {
   useMarkPaymentFailedMutation,
 } from './paymentsApi'
 export { useRazorpayPayment } from './hooks'
-export { openRazorpayCheckout } from './razorpay'
+export { openRazorpayCheckout, preloadRazorpayScript } from './razorpay'
 export type {
   CreateRazorpayOrderResponse,
   RazorpayCheckoutOptions,

@@ -29,9 +29,28 @@ export const ordersApi = baseApi.injectEndpoints({
         method: 'PATCH',
         body: { reason },
       }),
+      async onQueryStarted({ orderId }, { dispatch, queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled
+          dispatch(
+            ordersApi.util.updateQueryData('getOrderById', orderId, () => data),
+          )
+          dispatch(
+            ordersApi.util.updateQueryData('getMyOrders', undefined, (draft) => {
+              const index = draft.findIndex((entry) => entry._id === orderId)
+              if (index !== -1) {
+                draft[index] = data
+              }
+            }),
+          )
+        } catch {
+          // invalidatesTags handles failed mutations
+        }
+      },
       invalidatesTags: (_result, _error, { orderId }) => [
         { type: 'Order', id: orderId },
         { type: 'Order', id: 'LIST' },
+        'Payment',
       ],
     }),
     createReturn: builder.mutation<ReturnRequest, CreateReturnRequest>({
