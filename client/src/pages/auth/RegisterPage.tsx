@@ -46,11 +46,6 @@ export function RegisterPage() {
   const accountType = form.watch('accountType')
 
   const onSubmit = form.handleSubmit(async (values) => {
-    if (values.accountType === 'merchant') {
-      navigate(ROUTES.becomeASeller)
-      return
-    }
-
     try {
       await registerUser(toRegisterRequest(values)).unwrap()
       toast.success('Account created. Please sign in.')
@@ -152,9 +147,14 @@ export function RegisterPage() {
               )}
 
               <Button
-                type="submit"
+                type={accountType === 'merchant' ? 'button' : 'submit'}
                 className="w-full bg-brand-primary hover:bg-brand-primary/90"
                 disabled={isLoading}
+                onClick={
+                  accountType === 'merchant'
+                    ? () => navigate(ROUTES.becomeASeller)
+                    : undefined
+                }
               >
                 {isLoading ? (
                   <>
