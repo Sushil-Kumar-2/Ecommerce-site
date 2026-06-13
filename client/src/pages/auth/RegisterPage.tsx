@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Loader2 } from 'lucide-react'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch  } from 'react-hook-form'
 import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 
@@ -43,7 +43,7 @@ export function RegisterPage() {
     },
   })
 
-  const accountType = form.watch('accountType')
+  const accountType = useWatch({ control: form.control, name: 'accountType' })
 
   const onSubmit = form.handleSubmit(async (values) => {
     try {
